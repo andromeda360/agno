@@ -118,6 +118,12 @@ class Function(BaseModel):
     cache_dir: Optional[str] = None
     cache_ttl: int = 3600
 
+    # -*- Custom Andromeda360 Feature -*-
+    # Filter which downstream agent outputs to include in tool call results
+    # If None, all agent outputs are included. If a comma-separated string of agent_ids,
+    # only outputs from those agents will be included.
+    agent_ids_to_return_content_for: Optional[str] = None
+
     # --*-- FOR INTERNAL USE ONLY --*--
     # The agent that the function is associated with
     _agent: Optional[Any] = None

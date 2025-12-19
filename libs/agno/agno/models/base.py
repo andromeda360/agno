@@ -34,6 +34,7 @@ from agno.run.team import RunContentEvent as TeamRunContentEvent
 from agno.run.team import TeamRunOutput, TeamRunOutputEvent
 from agno.run.workflow import WorkflowRunOutputEvent
 from agno.tools.function import Function, FunctionCall, FunctionExecutionResult, UserInputField
+from agno.utils.custom_message_logger import log_message
 from agno.utils.log import log_debug, log_error, log_info, log_warning
 from agno.utils.timer import Timer
 from agno.utils.tools import get_function_call_for_tool_call, get_function_call_for_tool_execution
@@ -63,11 +64,23 @@ class MessageData:
 
 def _log_messages(messages: List[Message]) -> None:
     """
-    Log messages for debugging.
+    Log messages for debugging with optional system message truncation.
+
+    Uses custom message logger that supports truncation via environment variable:
+    AGNO_SYSTEM_MESSAGE_LOG_TRUNCATE_LENGTH
     """
+    import os
+
+    # Get truncation length from environment variable
+    truncate_length = int(os.getenv("AGNO_SYSTEM_MESSAGE_LOG_TRUNCATE_LENGTH", "0"))
+
     for m in messages:
         # Don't log metrics for input messages
-        m.log(metrics=False)
+        # Use custom logger with truncation support
+        if truncate_length > 0:
+            log_message(m, system_message_truncate_length=truncate_length, metrics=False)
+        else:
+            m.log(metrics=False)
 
 
 def _handle_agent_exception(a_exc: AgentRunException, additional_input: Optional[List[Message]] = None) -> None:
@@ -113,6 +126,11 @@ class Model(ABC):
     name: Optional[str] = None
     # Provider for this Model. This is not sent to the Model API.
     provider: Optional[str] = None
+
+    # -*- Custom Andromeda360 Feature -*-
+    # Flag to enable/disable the logging of all in-context messages
+    # Set to False to suppress logging (useful in production)
+    log_messages: bool = True
 
     # -*- Do not set the following attributes directly -*-
     # -*- Set them on the Agent instead -*-
@@ -338,7 +356,8 @@ class Model(ABC):
         log_debug(f"{self.get_provider()} Response Start", center=True, symbol="-")
         log_debug(f"Model: {self.id}", center=True, symbol="-")
 
-        _log_messages(messages)
+        if self.log_messages:
+            _log_messages(messages)
         model_response = ModelResponse()
 
         function_call_count = 0
@@ -502,7 +521,8 @@ class Model(ABC):
 
         log_debug(f"{self.get_provider()} Async Response Start", center=True, symbol="-")
         log_debug(f"Model: {self.id}", center=True, symbol="-")
-        _log_messages(messages)
+        if self.log_messages:
+            _log_messages(messages)
         model_response = ModelResponse()
 
         _tool_dicts = self._format_tools(tools) if tools is not None else []
@@ -886,7 +906,8 @@ class Model(ABC):
 
         log_debug(f"{self.get_provider()} Response Stream Start", center=True, symbol="-")
         log_debug(f"Model: {self.id}", center=True, symbol="-")
-        _log_messages(messages)
+        if self.log_messages:
+            _log_messages(messages)
 
         _tool_dicts = self._format_tools(tools) if tools is not None else []
         _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
@@ -1068,7 +1089,8 @@ class Model(ABC):
 
         log_debug(f"{self.get_provider()} Async Response Stream Start", center=True, symbol="-")
         log_debug(f"Model: {self.id}", center=True, symbol="-")
-        _log_messages(messages)
+        if self.log_messages:
+            _log_messages(messages)
 
         _tool_dicts = self._format_tools(tools) if tools is not None else []
         _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
@@ -1461,11 +1483,17 @@ class Model(ABC):
                 ):
                     # We only capture content events for output accumulation
                     if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
-                        if item.content is not None and isinstance(item.content, BaseModel):
-                            function_call_output += item.content.model_dump_json()
-                        else:
-                            # Capture output
-                            function_call_output += item.content or ""
+                        # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
+                        agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
+                        if (
+                            function_call.function.agent_ids_to_return_content_for is None
+                            or agent_id in function_call.function.agent_ids_to_return_content_for
+                        ):
+                            if item.content is not None and isinstance(item.content, BaseModel):
+                                function_call_output += item.content.model_dump_json()
+                            else:
+                                # Capture output
+                                function_call_output += item.content or ""
 
                         if function_call.function.show_result and item.content is not None:
                             yield ModelResponse(content=item.content)
@@ -1863,11 +1891,17 @@ class Model(ABC):
                     ):
                         # We only capture content events
                         if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
-                            if item.content is not None and isinstance(item.content, BaseModel):
-                                function_call_output += item.content.model_dump_json()
-                            else:
-                                # Capture output
-                                function_call_output += item.content or ""
+                            # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
+                            agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
+                            if (
+                                function_call.function.agent_ids_to_return_content_for is None
+                                or agent_id in function_call.function.agent_ids_to_return_content_for
+                            ):
+                                if item.content is not None and isinstance(item.content, BaseModel):
+                                    function_call_output += item.content.model_dump_json()
+                                else:
+                                    # Capture output
+                                    function_call_output += item.content or ""
 
                             if function_call.function.show_result and item.content is not None:
                                 await event_queue.put(ModelResponse(content=item.content))
@@ -1985,11 +2019,17 @@ class Model(ABC):
                     ):
                         # We only capture content events
                         if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
-                            if item.content is not None and isinstance(item.content, BaseModel):
-                                function_call_output += item.content.model_dump_json()
-                            else:
-                                # Capture output
-                                function_call_output += item.content or ""
+                            # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
+                            agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
+                            if (
+                                function_call.function.agent_ids_to_return_content_for is None
+                                or agent_id in function_call.function.agent_ids_to_return_content_for
+                            ):
+                                if item.content is not None and isinstance(item.content, BaseModel):
+                                    function_call_output += item.content.model_dump_json()
+                                else:
+                                    # Capture output
+                                    function_call_output += item.content or ""
 
                             if function_call.function.show_result and item.content is not None:
                                 yield ModelResponse(content=item.content)
