@@ -67,6 +67,7 @@ class AwsBedrock(Model):
     aws_region: Optional[str] = None
     aws_access_key_id: Optional[str] = None
     aws_secret_access_key: Optional[str] = None
+    aws_session_token: Optional[str] = None  # Added to support temporary credentials
     session: Optional[Session] = None
 
     # Request parameters
@@ -130,7 +131,18 @@ class AwsBedrock(Model):
         if self.async_session is None:
             self.aws_access_key_id = self.aws_access_key_id or getenv("AWS_ACCESS_KEY_ID")
             self.aws_secret_access_key = self.aws_secret_access_key or getenv("AWS_SECRET_ACCESS_KEY")
+            self.aws_session_token = self.aws_session_token or getenv("AWS_SESSION_TOKEN")
             self.aws_region = self.aws_region or getenv("AWS_REGION")
+
+            # Use boto3 session if provided (supports full credential chain including session token)
+            if self.session:
+                credentials = self.session.get_credentials()
+                if credentials:
+                    frozen = credentials.get_frozen_credentials()
+                    self.aws_access_key_id = frozen.access_key
+                    self.aws_secret_access_key = frozen.secret_key
+                    self.aws_session_token = frozen.token
+                    self.aws_region = self.aws_region or self.session.region_name
 
             self.async_session = aioboto3.Session()
 
@@ -163,6 +175,9 @@ class AwsBedrock(Model):
                         "aws_secret_access_key": self.aws_secret_access_key,
                     }
                 )
+                # Add session token if available (required for temporary credentials)
+                if self.aws_session_token:
+                    client_kwargs["aws_session_token"] = self.aws_session_token
 
         return self.async_session.client(**client_kwargs)
 

@@ -1,7 +1,8 @@
 import json
 from typing import Optional
 
-from agno.models.message import Message, MessageMetrics
+from agno.models.message import Message
+from agno.models.metrics import Metrics
 from agno.utils.log import log_debug, log_error, log_info, log_warning
 
 
@@ -43,7 +44,7 @@ def log_message(
         _logger(f"Name: {message.name}")
     if message.tool_call_id:
         _logger(f"Tool call Id: {message.tool_call_id}")
-    if message.thinking:
+    if hasattr(message, "thinking") and message.thinking:
         _logger(f"<thinking>\n{message.thinking}\n</thinking>")
     if message.content:
         if isinstance(message.content, str) or isinstance(message.content, list):
@@ -87,7 +88,7 @@ def log_message(
         _logger(f"Files added: {len(message.files)}")
 
     metrics_header = " TOOL METRICS " if message.role == "tool" else " METRICS "
-    if metrics and message.metrics is not None and message.metrics != MessageMetrics():
+    if metrics and message.metrics is not None and message.metrics != Metrics():
         _logger(metrics_header, center=True, symbol="*")
 
         # Combine token metrics into a single line
