@@ -28,6 +28,7 @@ from agno.utils.log import log_debug, logger, use_agent_logger, use_team_logger,
 from agno.utils.merge_dict import merge_dictionaries
 from agno.workflow.types import StepInput, StepOutput, StepType
 
+
 StepExecutor = Callable[
     [StepInput],
     Union[
@@ -262,9 +263,21 @@ class Step:
                             ):  # type: ignore
                                 if isinstance(chunk, (BaseRunOutputEvent)):
                                     if isinstance(chunk, (RunContentEvent, TeamRunContentEvent)):
-                                        content += chunk.content if chunk.content is not None else ""
+                                        if chunk.content is not None:
+                                            if isinstance(chunk.content, str):
+                                                content += chunk.content
+                                            elif hasattr(chunk.content, 'model_dump_json'):
+                                                content += chunk.content.model_dump_json()
+                                            else:
+                                                content += str(chunk.content)
                                     elif isinstance(chunk, (RunCompletedEvent, TeamRunCompletedEvent)):
-                                        content = chunk.content if chunk.content is not None else ""
+                                        if chunk.content is not None:
+                                            if hasattr(chunk.content, 'model_dump_json'):
+                                                content = chunk.content.model_dump_json()
+                                            else:
+                                                content = str(chunk.content) if not isinstance(chunk.content, str) else chunk.content
+                                        else:
+                                            content = ""
                                 else:
                                     content += str(chunk)
                                 if isinstance(chunk, StepOutput):
@@ -504,9 +517,22 @@ class Step:
                             for event in iterator:  # type: ignore
                                 if isinstance(event, (BaseRunOutputEvent)):
                                     if isinstance(event, (RunContentEvent, TeamRunContentEvent)):
-                                        content += event.content if event.content is not None else ""
+                                        if event.content is not None:
+                                            if isinstance(event.content, str):
+                                                content += event.content
+                                            elif hasattr(event.content, 'model_dump_json'):
+                                                content += event.content.model_dump_json()
+                                            else:
+                                                content += str(event.content)
                                     elif isinstance(event, (RunCompletedEvent, TeamRunCompletedEvent)):
-                                        content = event.content if event.content is not None else ""
+                                        # Handle Pydantic models - convert to JSON string to avoid concatenation errors
+                                        if event.content is not None:
+                                            if hasattr(event.content, 'model_dump_json'):
+                                                content = event.content.model_dump_json()
+                                            else:
+                                                content = str(event.content) if not isinstance(event.content, str) else event.content
+                                        else:
+                                            content = ""
                                 else:
                                     content += str(event)
                                 if isinstance(event, StepOutput):
@@ -721,9 +747,21 @@ class Step:
                                 for chunk in iterator:  # type: ignore
                                     if isinstance(chunk, (BaseRunOutputEvent)):
                                         if isinstance(chunk, (RunContentEvent, TeamRunContentEvent)):
-                                            content += chunk.content if chunk.content is not None else ""
+                                            if chunk.content is not None:
+                                                if isinstance(chunk.content, str):
+                                                    content += chunk.content
+                                                elif hasattr(chunk.content, 'model_dump_json'):
+                                                    content += chunk.content.model_dump_json()
+                                                else:
+                                                    content += str(chunk.content)
                                         elif isinstance(chunk, (RunCompletedEvent, TeamRunCompletedEvent)):
-                                            content = chunk.content if chunk.content is not None else ""
+                                            if chunk.content is not None:
+                                                if hasattr(chunk.content, 'model_dump_json'):
+                                                    content = chunk.content.model_dump_json()
+                                                else:
+                                                    content = str(chunk.content) if not isinstance(chunk.content, str) else chunk.content
+                                            else:
+                                                content = ""
                                     else:
                                         content += str(chunk)
                                     if isinstance(chunk, StepOutput):
@@ -739,9 +777,21 @@ class Step:
                                     async for chunk in iterator:  # type: ignore
                                         if isinstance(chunk, (BaseRunOutputEvent)):
                                             if isinstance(chunk, (RunContentEvent, TeamRunContentEvent)):
-                                                content += chunk.content if chunk.content is not None else ""
+                                                if chunk.content is not None:
+                                                    if isinstance(chunk.content, str):
+                                                        content += chunk.content
+                                                    elif hasattr(chunk.content, 'model_dump_json'):
+                                                        content += chunk.content.model_dump_json()
+                                                    else:
+                                                        content += str(chunk.content)
                                             elif isinstance(chunk, (RunCompletedEvent, TeamRunCompletedEvent)):
-                                                content = chunk.content if chunk.content is not None else ""
+                                                if chunk.content is not None:
+                                                    if hasattr(chunk.content, 'model_dump_json'):
+                                                        content = chunk.content.model_dump_json()
+                                                    else:
+                                                        content = str(chunk.content) if not isinstance(chunk.content, str) else chunk.content
+                                                else:
+                                                    content = ""
                                         else:
                                             content += str(chunk)
                                         if isinstance(chunk, StepOutput):
@@ -941,9 +991,22 @@ class Step:
                         async for event in iterator:  # type: ignore
                             if isinstance(event, (BaseRunOutputEvent)):
                                 if isinstance(event, (RunContentEvent, TeamRunContentEvent)):
-                                    content += event.content if event.content is not None else ""
+                                    if event.content is not None:
+                                        if isinstance(event.content, str):
+                                            content += event.content
+                                        elif hasattr(event.content, 'model_dump_json'):
+                                            content += event.content.model_dump_json()
+                                        else:
+                                            content += str(event.content)
                                 elif isinstance(event, (RunCompletedEvent, TeamRunCompletedEvent)):
-                                    content = event.content if event.content is not None else ""
+                                    # Handle Pydantic models - convert to JSON string to avoid concatenation errors
+                                    if event.content is not None:
+                                        if hasattr(event.content, 'model_dump_json'):
+                                            content = event.content.model_dump_json()
+                                        else:
+                                            content = str(event.content) if not isinstance(event.content, str) else event.content
+                                    else:
+                                        content = ""
                             else:
                                 content += str(event)
                             if isinstance(event, StepOutput):
@@ -983,9 +1046,22 @@ class Step:
                         for event in iterator:  # type: ignore
                             if isinstance(event, (BaseRunOutputEvent)):
                                 if isinstance(event, (RunContentEvent, TeamRunContentEvent)):
-                                    content += event.content if event.content is not None else ""
+                                    if event.content is not None:
+                                        if isinstance(event.content, str):
+                                            content += event.content
+                                        elif hasattr(event.content, 'model_dump_json'):
+                                            content += event.content.model_dump_json()
+                                        else:
+                                            content += str(event.content)
                                 elif isinstance(event, (RunCompletedEvent, TeamRunCompletedEvent)):
-                                    content = event.content if event.content is not None else ""
+                                    # Handle Pydantic models - convert to JSON string to avoid concatenation errors
+                                    if event.content is not None:
+                                        if hasattr(event.content, 'model_dump_json'):
+                                            content = event.content.model_dump_json()
+                                        else:
+                                            content = str(event.content) if not isinstance(event.content, str) else event.content
+                                    else:
+                                        content = ""
                             else:
                                 content += str(event)
                             if isinstance(event, StepOutput):
