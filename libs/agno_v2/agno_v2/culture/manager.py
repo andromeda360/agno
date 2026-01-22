@@ -92,7 +92,7 @@ class CultureManager:
         return self.model
 
     def set_log_level(self):
-        if self.debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
+        if self.debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
             self.debug_mode = True
             set_log_level_to_debug()
         else:

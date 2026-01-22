@@ -71,7 +71,7 @@ def _log_messages(messages: List[Message]) -> None:
     import os
 
     # Get truncation length from environment variable
-    truncate_length = int(os.getenv("AGNO_V2_V2_SYSTEM_MESSAGE_LOG_TRUNCATE_LENGTH", "0"))
+    truncate_length = int(os.getenv("AGNO_V2_SYSTEM_MESSAGE_LOG_TRUNCATE_LENGTH", "0"))
 
     for m in messages:
         # Don't log metrics for input messages

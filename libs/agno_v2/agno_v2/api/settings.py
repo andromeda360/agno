@@ -18,7 +18,7 @@ class AgnoAPISettings(BaseSettings):
 
     api_url: str = "https://os-api.agno.com"
 
-    model_config = SettingsConfigDict(env_prefix="AGNO_V2_V2_")
+    model_config = SettingsConfigDict(env_prefix="AGNO_V2_")
 
     @field_validator("api_runtime", mode="before")
     def validate_runtime_env(cls, v):
@@ -36,7 +36,7 @@ class AgnoAPISettings(BaseSettings):
         if api_runtime == "dev":
             from os import getenv
 
-            if getenv("AGNO_V2_V2_RUNTIME") == "docker":
+            if getenv("AGNO_V2_RUNTIME") == "docker":
                 return "http://host.docker.internal:7070"
             return "http://localhost:7070"
         elif api_runtime == "stg":

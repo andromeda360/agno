@@ -710,14 +710,15 @@ class Agent:
             cast(Literal[1, 2], int(env)) if (env := getenv("AGNO_V2_DEBUG_LEVEL")) in ("1", "2") else self.debug_level
         )
         # If the default debug mode is set, or passed on run, or via environment variable, set the debug mode to True
-        if self.debug_mode or debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
-            set_log_level_to_debug(level=self.debug_level)        else:
+        if self.debug_mode or debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
+            set_log_level_to_debug(level=self.debug_level)
+        else:
             set_log_level_to_info()
 
     def _set_telemetry(self) -> None:
         """Override telemetry settings based on environment variables."""
 
-        telemetry_env = getenv("AGNO_V2_V2_TELEMETRY")
+        telemetry_env = getenv("AGNO_V2_TELEMETRY")
         if telemetry_env is not None:
             self.telemetry = telemetry_env.lower() == "true"
 

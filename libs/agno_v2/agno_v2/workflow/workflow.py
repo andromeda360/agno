@@ -1107,7 +1107,7 @@ class Workflow:
 
     def _set_debug(self) -> None:
         """Set debug mode and configure logging"""
-        if self.debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
+        if self.debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
             use_workflow_logger()
             debug_level: Literal[1, 2] = (
                 cast(Literal[1, 2], int(env)) if (env := getenv("AGNO_V2_DEBUG_LEVEL")) in ("1", "2") else self.debug_level
@@ -1131,7 +1131,7 @@ class Workflow:
     def _set_telemetry(self) -> None:
         """Override telemetry settings based on environment variables."""
 
-        telemetry_env = getenv("AGNO_V2_V2_TELEMETRY")
+        telemetry_env = getenv("AGNO_V2_TELEMETRY")
         if telemetry_env is not None:
             self.telemetry = telemetry_env.lower() == "true"
 

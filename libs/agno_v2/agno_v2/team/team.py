@@ -751,14 +751,14 @@ class Team:
             self.id = generate_id_from_name(self.name)
 
     def _set_debug(self, debug_mode: Optional[bool] = None) -> None:
-        if self.debug_mode or debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
+        if self.debug_mode or debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
             set_log_level_to_debug(source_type="team", level=self.debug_level)        else:
             set_log_level_to_info(source_type="team")
 
     def _set_telemetry(self) -> None:
         """Override telemetry settings based on environment variables."""
 
-        telemetry_env = getenv("AGNO_V2_V2_TELEMETRY")
+        telemetry_env = getenv("AGNO_V2_TELEMETRY")
         if telemetry_env is not None:
             self.telemetry = telemetry_env.lower() == "true"
 
