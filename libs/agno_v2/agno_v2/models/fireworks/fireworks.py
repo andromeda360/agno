@@ -1,8 +1,13 @@
 from dataclasses import dataclass, field
 from os import getenv
-from typing import Optional
+from typing import Any, Dict, Optional
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/models/fireworks/fireworks.py
 from agno_v2.models.openai import OpenAILike
+=======
+from agno.exceptions import ModelAuthenticationError
+from agno.models.openai import OpenAILike
+>>>>>>> origin/main:libs/agno/agno/models/fireworks/fireworks.py
 
 
 @dataclass
@@ -24,3 +29,19 @@ class Fireworks(OpenAILike):
 
     api_key: Optional[str] = field(default_factory=lambda: getenv("FIREWORKS_API_KEY"))
     base_url: str = "https://api.fireworks.ai/inference/v1"
+
+    def _get_client_params(self) -> Dict[str, Any]:
+        """
+        Returns client parameters for API requests, checking for FIREWORKS_API_KEY.
+
+        Returns:
+            Dict[str, Any]: A dictionary of client parameters for API requests.
+        """
+        if not self.api_key:
+            self.api_key = getenv("FIREWORKS_API_KEY")
+            if not self.api_key:
+                raise ModelAuthenticationError(
+                    message="FIREWORKS_API_KEY not set. Please set the FIREWORKS_API_KEY environment variable.",
+                    model_name=self.name,
+                )
+        return super()._get_client_params()

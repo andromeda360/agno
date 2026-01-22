@@ -1,11 +1,17 @@
 from dataclasses import dataclass, field
 from os import getenv
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/models/cometapi/cometapi.py
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.utils.log import log_debug
+=======
+from agno.exceptions import ModelAuthenticationError
+from agno.models.openai.like import OpenAILike
+from agno.utils.log import log_debug
+>>>>>>> origin/main:libs/agno/agno/models/cometapi/cometapi.py
 
 
 @dataclass
@@ -25,6 +31,22 @@ class CometAPI(OpenAILike):
     id: str = "gpt-5-mini"
     api_key: Optional[str] = field(default_factory=lambda: getenv("COMETAPI_KEY"))
     base_url: str = "https://api.cometapi.com/v1"
+
+    def _get_client_params(self) -> Dict[str, Any]:
+        """
+        Returns client parameters for API requests, checking for COMETAPI_KEY.
+
+        Returns:
+            Dict[str, Any]: A dictionary of client parameters for API requests.
+        """
+        if not self.api_key:
+            self.api_key = getenv("COMETAPI_KEY")
+            if not self.api_key:
+                raise ModelAuthenticationError(
+                    message="COMETAPI_KEY not set. Please set the COMETAPI_KEY environment variable.",
+                    model_name=self.name,
+                )
+        return super()._get_client_params()
 
     def get_available_models(self) -> List[str]:
         """

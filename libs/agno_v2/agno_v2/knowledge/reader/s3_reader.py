@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import List, Optional
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/s3_reader.py
 from agno_v2.knowledge.chunking.fixed import FixedSizeChunking
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
@@ -11,6 +12,16 @@ from agno_v2.knowledge.reader.pdf_reader import PDFReader
 from agno_v2.knowledge.reader.text_reader import TextReader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import log_info, logger
+=======
+from agno.knowledge.chunking.fixed import FixedSizeChunking
+from agno.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
+from agno.knowledge.document.base import Document
+from agno.knowledge.reader.base import Reader
+from agno.knowledge.reader.pdf_reader import PDFReader
+from agno.knowledge.reader.text_reader import TextReader
+from agno.knowledge.types import ContentType
+from agno.utils.log import log_debug, log_error
+>>>>>>> origin/main:libs/agno/agno/knowledge/reader/s3_reader.py
 
 try:
     from agno_v2.aws.resource.s3.object import S3Object  # type: ignore
@@ -51,7 +62,7 @@ class S3Reader(Reader):
 
     def read(self, name: Optional[str], s3_object: S3Object) -> List[Document]:
         try:
-            log_info(f"Reading S3 file: {s3_object.uri}")
+            log_debug(f"Reading S3 file: {s3_object.uri}")
 
             # Read PDF files
             if s3_object.uri.endswith(".pdf"):
@@ -80,7 +91,7 @@ class S3Reader(Reader):
                 return documents
 
         except Exception as e:
-            logger.error(f"Error reading: {s3_object.uri}: {e}")
+            log_error(f"Error reading: {s3_object.uri}: {e}")
 
         return []
 

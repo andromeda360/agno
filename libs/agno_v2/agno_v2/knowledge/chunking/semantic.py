@@ -1,17 +1,29 @@
 import inspect
 from typing import Any, Dict, List, Optional
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/chunking/semantic.py
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.embedder.base import Embedder
 from agno_v2.knowledge.embedder.openai import OpenAIEmbedder
+=======
+from agno.knowledge.chunking.strategy import ChunkingStrategy
+from agno.knowledge.document.base import Document
+from agno.knowledge.embedder.base import Embedder
+from agno.utils.log import log_info
+>>>>>>> origin/main:libs/agno/agno/knowledge/chunking/semantic.py
 
 
 class SemanticChunking(ChunkingStrategy):
     """Chunking strategy that splits text into semantic chunks using chonkie"""
 
     def __init__(self, embedder: Optional[Embedder] = None, chunk_size: int = 5000, similarity_threshold: float = 0.5):
-        self.embedder = embedder or OpenAIEmbedder(id="text-embedding-3-small")  # type: ignore
+        if embedder is None:
+            from agno.knowledge.embedder.openai import OpenAIEmbedder
+
+            embedder = OpenAIEmbedder()  # type: ignore
+            log_info("Embedder not provided, using OpenAIEmbedder as default.")
+        self.embedder = embedder
         self.chunk_size = chunk_size
         self.similarity_threshold = similarity_threshold
         self.chunker = None  # Will be initialized lazily when needed
@@ -50,10 +62,10 @@ class SemanticChunking(ChunkingStrategy):
                     # Fallback to model id
                     params["embedding_model"] = getattr(self.embedder, "id", None) or "text-embedding-3-small"
 
-                self.chunker = SemanticChunker(**params)
+                self.chunker = SemanticChunker(**params)  # type: ignore
             except Exception:
                 # As a final fallback, use the original behavior
-                self.chunker = SemanticChunker(
+                self.chunker = SemanticChunker(  # type: ignore
                     embedding_model=getattr(self.embedder, "id", None) or "text-embedding-3-small",
                     chunk_size=self.chunk_size,
                     threshold=self.similarity_threshold,

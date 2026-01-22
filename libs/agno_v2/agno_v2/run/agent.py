@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/run/agent.py
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Citations, Message
 from agno_v2.models.metrics import Metrics
@@ -13,6 +14,17 @@ from agno_v2.reasoning.step import ReasoningStep
 from agno_v2.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
 from agno_v2.utils.log import logger
 from agno_v2.utils.media import (
+=======
+from agno.media import Audio, File, Image, Video
+from agno.models.message import Citations, Message
+from agno.models.metrics import Metrics
+from agno.models.response import ToolExecution
+from agno.reasoning.step import ReasoningStep
+from agno.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
+from agno.run.requirement import RunRequirement
+from agno.utils.log import logger
+from agno.utils.media import (
+>>>>>>> origin/main:libs/agno/agno/run/agent.py
     reconstruct_audio_list,
     reconstruct_files,
     reconstruct_images,
@@ -273,10 +285,17 @@ class RunCompletedEvent(BaseAgentRunEvent):
 class RunPausedEvent(BaseAgentRunEvent):
     event: str = RunEvent.run_paused.value
     tools: Optional[List[ToolExecution]] = None
+    requirements: Optional[List[RunRequirement]] = None
 
     @property
     def is_paused(self):
         return True
+
+    @property
+    def active_requirements(self) -> List[RunRequirement]:
+        if not self.requirements:
+            return []
+        return [requirement for requirement in self.requirements if not requirement.is_resolved()]
 
 
 @dataclass
@@ -539,10 +558,19 @@ class RunOutput:
 
     status: RunStatus = RunStatus.running
 
+    # User control flow (HITL) requirements to continue a run when paused, in order of arrival
+    requirements: Optional[list[RunRequirement]] = None
+
     # === FOREIGN KEY RELATIONSHIPS ===
     # These fields establish relationships to parent workflow/step structures
     # and should be treated as foreign keys for data integrity
     workflow_step_id: Optional[str] = None  # FK: Points to StepOutput.step_id
+
+    @property
+    def active_requirements(self) -> list[RunRequirement]:
+        if not self.requirements:
+            return []
+        return [requirement for requirement in self.requirements if not requirement.is_resolved()]
 
     @property
     def is_paused(self):
@@ -572,6 +600,7 @@ class RunOutput:
             and k
             not in [
                 "messages",
+                "metrics",
                 "tools",
                 "metadata",
                 "images",

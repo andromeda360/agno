@@ -903,7 +903,7 @@ class FunctionCall(BaseModel):
                 return FunctionExecutionResult(status="success", result=cached_result)
 
         # Execute function
-        execution_result = None
+        execution_result: FunctionExecutionResult
         exception_to_raise = None
 
         try:
@@ -945,6 +945,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             exception_to_raise = e
+            execution_result = FunctionExecutionResult(status="failure", error=str(e))
         except Exception as e:
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
@@ -954,10 +955,10 @@ class FunctionCall(BaseModel):
         finally:
             self._handle_post_hook()
 
-            if exception_to_raise is not None:
-                raise exception_to_raise
+        if exception_to_raise is not None:
+            raise exception_to_raise
 
-            return execution_result  # type: ignore[return-value]
+        return execution_result
 
     async def _handle_pre_hook_async(self):
         """Handles the async pre-hook for the function call."""
@@ -1123,7 +1124,7 @@ class FunctionCall(BaseModel):
                 return FunctionExecutionResult(status="success", result=cached_result)
 
         # Execute function
-        execution_result = None
+        execution_result: FunctionExecutionResult
         exception_to_raise = None
 
         try:
@@ -1165,6 +1166,7 @@ class FunctionCall(BaseModel):
             log_debug(f"{e.__class__.__name__}: {e}")
             self.error = str(e)
             exception_to_raise = e
+            execution_result = FunctionExecutionResult(status="failure", error=str(e))
         except Exception as e:
             log_warning(f"Could not run function {self.get_call_str()}")
             log_exception(e)
@@ -1177,10 +1179,10 @@ class FunctionCall(BaseModel):
             else:
                 self._handle_post_hook()
 
-            if exception_to_raise is not None:
-                raise exception_to_raise
+        if exception_to_raise is not None:
+            raise exception_to_raise
 
-            return execution_result  # type: ignore[return-value]
+        return execution_result
 
 
 class ToolResult(BaseModel):

@@ -10,12 +10,21 @@ try:
 except ImportError:
     raise ImportError("`aiofiles` not installed. Please install it with `pip install aiofiles`")
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/csv_reader.py
 from agno_v2.knowledge.chunking.row import RowChunking
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.reader.base import Reader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import logger
+=======
+from agno.knowledge.chunking.row import RowChunking
+from agno.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
+from agno.knowledge.document.base import Document
+from agno.knowledge.reader.base import Reader
+from agno.knowledge.types import ContentType
+from agno.utils.log import log_debug, log_error
+>>>>>>> origin/main:libs/agno/agno/knowledge/reader/csv_reader.py
 
 
 class CSVReader(Reader):
@@ -46,10 +55,10 @@ class CSVReader(Reader):
             if isinstance(file, Path):
                 if not file.exists():
                     raise FileNotFoundError(f"Could not find file: {file}")
-                logger.info(f"Reading: {file}")
+                log_debug(f"Reading: {file}")
                 file_content = file.open(newline="", mode="r", encoding=self.encoding or "utf-8")
             else:
-                logger.info(f"Reading retrieved file: {name or file.name}")
+                log_debug(f"Reading retrieved file: {name or file.name}")
                 file.seek(0)
                 file_content = io.StringIO(file.read().decode("utf-8"))  # type: ignore
 
@@ -78,7 +87,7 @@ class CSVReader(Reader):
                 return chunked_documents
             return documents
         except Exception as e:
-            logger.error(f"Error reading: {getattr(file, 'name', str(file)) if isinstance(file, IO) else file}: {e}")
+            log_error(f"Error reading: {getattr(file, 'name', str(file)) if isinstance(file, IO) else file}: {e}")
             return []
 
     async def async_read(
@@ -105,12 +114,12 @@ class CSVReader(Reader):
             if isinstance(file, Path):
                 if not file.exists():
                     raise FileNotFoundError(f"Could not find file: {file}")
-                logger.info(f"Reading async: {file}")
+                log_debug(f"Reading async: {file}")
                 async with aiofiles.open(file, mode="r", encoding="utf-8", newline="") as file_content:
                     content = await file_content.read()
                     file_content_io = io.StringIO(content)
             else:
-                logger.info(f"Reading retrieved file async: {file.name}")
+                log_debug(f"Reading retrieved file async: {file.name}")
                 file.seek(0)
                 file_content_io = io.StringIO(file.read().decode("utf-8"))  # type: ignore
 
@@ -160,7 +169,5 @@ class CSVReader(Reader):
 
             return documents
         except Exception as e:
-            logger.error(
-                f"Error reading async: {getattr(file, 'name', str(file)) if isinstance(file, IO) else file}: {e}"
-            )
+            log_error(f"Error reading async: {getattr(file, 'name', str(file)) if isinstance(file, IO) else file}: {e}")
             return []

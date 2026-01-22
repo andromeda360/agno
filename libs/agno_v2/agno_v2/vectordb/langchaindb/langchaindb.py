@@ -1,8 +1,15 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/langchaindb/langchaindb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.utils.log import log_debug, logger
 from agno_v2.vectordb.base import VectorDb
+=======
+from agno.filters import FilterExpr
+from agno.knowledge.document import Document
+from agno.utils.log import log_debug, log_warning, logger
+from agno.vectordb.base import VectorDb
+>>>>>>> origin/main:libs/agno/agno/vectordb/langchaindb/langchaindb.py
 
 
 class LangChainVectorDb(VectorDb):
@@ -70,8 +77,16 @@ class LangChainVectorDb(VectorDb):
         logger.warning("LangChainKnowledgeBase.async_upsert() not supported - please check the vectorstore manually.")
         raise NotImplementedError
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
+    ) -> List[Document]:
         """Returns relevant documents matching the query"""
+
+        if isinstance(filters, List):
+            log_warning(
+                "Filter Expressions are not supported in LangChainDB. No filters will be applied. Use filters as a dictionary."
+            )
+            filters = None
 
         try:
             from langchain_core.documents import Document as LangChainDocument
@@ -109,7 +124,7 @@ class LangChainVectorDb(VectorDb):
         return documents
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     ) -> List[Document]:
         return self.search(query, limit, filters)
 

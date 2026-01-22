@@ -2,8 +2,13 @@ from dataclasses import dataclass, field
 from os import getenv
 from typing import Any, Dict, Optional
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/models/deepseek/deepseek.py
 from agno_v2.exceptions import ModelProviderError
 from agno_v2.models.openai.like import OpenAILike
+=======
+from agno.exceptions import ModelAuthenticationError
+from agno.models.openai.like import OpenAILike
+>>>>>>> origin/main:libs/agno/agno/models/deepseek/deepseek.py
 
 
 @dataclass
@@ -35,10 +40,9 @@ class DeepSeek(OpenAILike):
             self.api_key = getenv("DEEPSEEK_API_KEY")
             if not self.api_key:
                 # Raise error immediately if key is missing
-                raise ModelProviderError(
+                raise ModelAuthenticationError(
                     message="DEEPSEEK_API_KEY not set. Please set the DEEPSEEK_API_KEY environment variable.",
                     model_name=self.name,
-                    model_id=self.id,
                 )
 
         # Define base client params

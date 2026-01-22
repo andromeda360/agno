@@ -1,9 +1,14 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from os import getenv
 from typing import Any, Dict, Optional, cast
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/models/portkey/portkey.py
 from agno_v2.exceptions import ModelProviderError
 from agno_v2.models.openai.like import OpenAILike
+=======
+from agno.exceptions import ModelAuthenticationError
+from agno.models.openai.like import OpenAILike
+>>>>>>> origin/main:libs/agno/agno/models/portkey/portkey.py
 
 try:
     from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
@@ -30,19 +35,20 @@ class Portkey(OpenAILike):
     name: str = "Portkey"
     provider: str = "Portkey"
 
-    portkey_api_key: Optional[str] = field(default_factory=lambda: getenv("PORTKEY_API_KEY"))
-    virtual_key: Optional[str] = field(default_factory=lambda: getenv("PORTKEY_VIRTUAL_KEY"))
+    portkey_api_key: Optional[str] = None
+    virtual_key: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     base_url: str = PORTKEY_GATEWAY_URL
 
     def _get_client_params(self) -> Dict[str, Any]:
         # Check for required keys
         if not self.portkey_api_key:
-            raise ModelProviderError(
+            raise ModelAuthenticationError(
                 message="PORTKEY_API_KEY not set. Please set the PORTKEY_API_KEY environment variable.",
                 model_name=self.name,
-                model_id=self.id,
             )
+
+        self.virtual_key = self.virtual_key or getenv("PORTKEY_VIRTUAL_KEY")
 
         # Create headers using Portkey's createHeaders function
         header_params: Dict[str, Any] = {

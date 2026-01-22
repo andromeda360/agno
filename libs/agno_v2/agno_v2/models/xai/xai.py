@@ -1,13 +1,21 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from os import getenv
 from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/models/xai/xai.py
 from agno_v2.models.message import Citations, UrlCitation
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.models.response import ModelResponse
 from agno_v2.utils.log import log_debug
+=======
+from agno.exceptions import ModelAuthenticationError
+from agno.models.message import Citations, UrlCitation
+from agno.models.openai.like import OpenAILike
+from agno.models.response import ModelResponse
+from agno.utils.log import log_debug
+>>>>>>> origin/main:libs/agno/agno/models/xai/xai.py
 
 try:
     from openai.types.chat.chat_completion import ChatCompletion
@@ -34,10 +42,26 @@ class xAI(OpenAILike):
     name: str = "xAI"
     provider: str = "xAI"
 
-    api_key: Optional[str] = field(default_factory=lambda: getenv("XAI_API_KEY"))
+    api_key: Optional[str] = None
     base_url: str = "https://api.x.ai/v1"
 
     search_parameters: Optional[Dict[str, Any]] = None
+
+    def _get_client_params(self) -> Dict[str, Any]:
+        """
+        Returns client parameters for API requests, checking for XAI_API_KEY.
+
+        Returns:
+            Dict[str, Any]: A dictionary of client parameters for API requests.
+        """
+        if not self.api_key:
+            self.api_key = getenv("XAI_API_KEY")
+            if not self.api_key:
+                raise ModelAuthenticationError(
+                    message="XAI_API_KEY not set. Please set the XAI_API_KEY environment variable.",
+                    model_name=self.name,
+                )
+        return super()._get_client_params()
 
     def get_request_params(
         self,

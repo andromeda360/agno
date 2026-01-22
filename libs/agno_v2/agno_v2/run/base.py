@@ -1,14 +1,23 @@
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/run/base.py
 from agno_v2.media import Audio, Image, Video
 from agno_v2.models.message import Citations, Message, MessageReferences
 from agno_v2.models.metrics import Metrics
 from agno_v2.reasoning.step import ReasoningStep
 from agno_v2.utils.log import log_error
+=======
+from agno.filters import FilterExpr
+from agno.media import Audio, Image, Video
+from agno.models.message import Citations, Message, MessageReferences
+from agno.models.metrics import Metrics
+from agno.reasoning.step import ReasoningStep
+from agno.utils.log import log_error
+>>>>>>> origin/main:libs/agno/agno/run/base.py
 
 
 @dataclass
@@ -18,9 +27,10 @@ class RunContext:
     user_id: Optional[str] = None
 
     dependencies: Optional[Dict[str, Any]] = None
-    knowledge_filters: Optional[Dict[str, Any]] = None
+    knowledge_filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     metadata: Optional[Dict[str, Any]] = None
     session_state: Optional[Dict[str, Any]] = None
+    output_schema: Optional[Type[BaseModel]] = None
 
 
 @dataclass
@@ -48,6 +58,7 @@ class BaseRunOutputEvent:
                 "additional_input",
                 "session_summary",
                 "metrics",
+                "run_input",
             ]
         }
 
@@ -132,6 +143,9 @@ class BaseRunOutputEvent:
         if hasattr(self, "session_summary") and self.session_summary is not None:
             _dict["session_summary"] = self.session_summary.to_dict()
 
+        if hasattr(self, "run_input") and self.run_input is not None:
+            _dict["run_input"] = self.run_input.to_dict()
+
         return _dict
 
     def to_json(self, separators=(", ", ": "), indent: Optional[int] = 2) -> str:
@@ -199,6 +213,19 @@ class BaseRunOutputEvent:
             from agno_v2.session.summary import SessionSummary
 
             data["session_summary"] = SessionSummary.from_dict(session_summary)
+
+        run_input = data.pop("run_input", None)
+        if run_input:
+            from agno.run.team import BaseTeamRunEvent
+
+            if issubclass(cls, BaseTeamRunEvent):
+                from agno.run.team import TeamRunInput
+
+                data["run_input"] = TeamRunInput.from_dict(run_input)
+            else:
+                from agno.run.agent import RunInput
+
+                data["run_input"] = RunInput.from_dict(run_input)
 
         # Filter data to only include fields that are actually defined in the target class
         from dataclasses import fields

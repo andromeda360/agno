@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/run/team.py
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Citations, Message
 from agno_v2.models.metrics import Metrics
@@ -14,6 +15,18 @@ from agno_v2.run.agent import RunEvent, RunOutput, RunOutputEvent, run_output_ev
 from agno_v2.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
 from agno_v2.utils.log import log_error
 from agno_v2.utils.media import (
+=======
+from agno.media import Audio, File, Image, Video
+from agno.models.message import Citations, Message
+from agno.models.metrics import Metrics
+from agno.models.response import ToolExecution
+from agno.reasoning.step import ReasoningStep
+from agno.run.agent import RunEvent, RunOutput, RunOutputEvent, run_output_event_from_dict
+from agno.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
+from agno.run.requirement import RunRequirement
+from agno.utils.log import log_error
+from agno.utils.media import (
+>>>>>>> origin/main:libs/agno/agno/run/team.py
     reconstruct_audio_list,
     reconstruct_files,
     reconstruct_images,
@@ -515,10 +528,19 @@ class TeamRunOutput:
 
     status: RunStatus = RunStatus.running
 
+    # User control flow (HITL) requirements to continue a run when paused, in order of arrival
+    requirements: Optional[list[RunRequirement]] = None
+
     # === FOREIGN KEY RELATIONSHIPS ===
     # These fields establish relationships to parent workflow/step structures
     # and should be treated as foreign keys for data integrity
     workflow_step_id: Optional[str] = None  # FK: Points to StepOutput.step_id
+
+    @property
+    def active_requirements(self) -> list[RunRequirement]:
+        if not self.requirements:
+            return []
+        return [requirement for requirement in self.requirements if not requirement.is_resolved()]
 
     @property
     def is_paused(self):
@@ -536,6 +558,7 @@ class TeamRunOutput:
             and k
             not in [
                 "messages",
+                "metrics",
                 "status",
                 "tools",
                 "metadata",
@@ -554,6 +577,9 @@ class TeamRunOutput:
         }
         if self.events is not None:
             _dict["events"] = [e.to_dict() for e in self.events]
+
+        if self.metrics is not None:
+            _dict["metrics"] = self.metrics.to_dict() if isinstance(self.metrics, Metrics) else self.metrics
 
         if self.status is not None:
             _dict["status"] = self.status.value if isinstance(self.status, RunStatus) else self.status

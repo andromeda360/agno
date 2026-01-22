@@ -1,7 +1,7 @@
 import asyncio
 import json
 from hashlib import md5
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 try:
     from sqlalchemy.dialects import mysql
@@ -14,12 +14,22 @@ try:
 except ImportError:
     raise ImportError("`sqlalchemy` not installed")
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/singlestore/singlestore.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
 from agno_v2.utils.log import log_debug, log_error, log_info
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
+=======
+from agno.filters import FilterExpr
+from agno.knowledge.document import Document
+from agno.knowledge.embedder import Embedder
+from agno.knowledge.reranker.base import Reranker
+from agno.utils.log import log_debug, log_error, log_info, log_warning
+from agno.vectordb.base import VectorDb
+from agno.vectordb.distance import Distance
+>>>>>>> origin/main:libs/agno/agno/vectordb/singlestore/singlestore.py
 
 
 class SingleStore(VectorDb):
@@ -282,7 +292,9 @@ class SingleStore(VectorDb):
             sess.commit()
             log_debug(f"Committed {counter} documents")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
+    ) -> List[Document]:
         """
         Search for documents based on a query and optional filters.
 
@@ -294,6 +306,8 @@ class SingleStore(VectorDb):
         Returns:
             List[Document]: List of documents that match the query.
         """
+        if filters is not None:
+            log_warning("Filters are not supported in SingleStore. No filters will be applied.")
         query_embedding = self.embedder.get_embedding(query)
         if query_embedding is None:
             log_error(f"Error getting embedding for Query: {query}")
@@ -665,7 +679,7 @@ class SingleStore(VectorDb):
             log_debug(f"Committed {counter} documents")
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     ) -> List[Document]:
         return self.search(query=query, limit=limit, filters=filters)
 

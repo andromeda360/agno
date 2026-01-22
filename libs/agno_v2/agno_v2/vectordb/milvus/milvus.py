@@ -9,6 +9,7 @@ try:
 except ImportError:
     raise ImportError("The `pymilvus` package is not installed. Please install it via `pip install pymilvus`.")
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/milvus/milvus.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
@@ -16,6 +17,16 @@ from agno_v2.utils.log import log_debug, log_error, log_info
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.search import SearchType
+=======
+from agno.filters import FilterExpr
+from agno.knowledge.document import Document
+from agno.knowledge.embedder import Embedder
+from agno.knowledge.reranker.base import Reranker
+from agno.utils.log import log_debug, log_error, log_info, log_warning
+from agno.vectordb.base import VectorDb
+from agno.vectordb.distance import Distance
+from agno.vectordb.search import SearchType
+>>>>>>> origin/main:libs/agno/agno/vectordb/milvus/milvus.py
 
 MILVUS_DISTANCE_MAP = {
     Distance.cosine: "COSINE",
@@ -675,7 +686,9 @@ class Milvus(VectorDb):
         """
         return MILVUS_DISTANCE_MAP.get(self.distance, "COSINE")
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
+    ) -> List[Document]:
         """
         Search for documents matching the query.
 
@@ -687,6 +700,9 @@ class Milvus(VectorDb):
         Returns:
             List[Document]: List of matching documents
         """
+        if isinstance(filters, List):
+            log_warning("Filters Expressions are not supported in Milvus. No filters will be applied.")
+            filters = None
         if self.search_type == SearchType.hybrid:
             return self.hybrid_search(query, limit)
 
@@ -728,8 +744,11 @@ class Milvus(VectorDb):
         return search_results
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     ) -> List[Document]:
+        if isinstance(filters, List):
+            log_warning("Filters Expressions are not supported in Milvus. No filters will be applied.")
+            filters = None
         if self.search_type == SearchType.hybrid:
             return await self.async_hybrid_search(query, limit, filters)
 
@@ -765,7 +784,9 @@ class Milvus(VectorDb):
         log_info(f"Found {len(search_results)} documents")
         return search_results
 
-    def hybrid_search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def hybrid_search(
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
+    ) -> List[Document]:
         """
         Perform a hybrid search combining dense and sparse vector similarity.
 
@@ -857,7 +878,7 @@ class Milvus(VectorDb):
             return []
 
     async def async_hybrid_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     ) -> List[Document]:
         """
         Perform an asynchronous hybrid search combining dense and sparse vector similarity.

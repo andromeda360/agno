@@ -1,8 +1,13 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from os import getenv
-from typing import Optional
+from typing import Any, Dict, Optional
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/models/together/together.py
 from agno_v2.models.openai.like import OpenAILike
+=======
+from agno.exceptions import ModelAuthenticationError
+from agno.models.openai.like import OpenAILike
+>>>>>>> origin/main:libs/agno/agno/models/together/together.py
 
 
 @dataclass
@@ -21,5 +26,21 @@ class Together(OpenAILike):
     id: str = "mistralai/Mixtral-8x7B-Instruct-v0.1"
     name: str = "Together"
     provider: str = "Together"
-    api_key: Optional[str] = field(default_factory=lambda: getenv("TOGETHER_API_KEY"))
+    api_key: Optional[str] = None
     base_url: str = "https://api.together.xyz/v1"
+
+    def _get_client_params(self) -> Dict[str, Any]:
+        """
+        Returns client parameters for API requests, checking for TOGETHER_API_KEY.
+
+        Returns:
+            Dict[str, Any]: A dictionary of client parameters for API requests.
+        """
+        if not self.api_key:
+            self.api_key = getenv("TOGETHER_API_KEY")
+            if not self.api_key:
+                raise ModelAuthenticationError(
+                    message="TOGETHER_API_KEY not set. Please set the TOGETHER_API_KEY environment variable.",
+                    model_name=self.name,
+                )
+        return super()._get_client_params()

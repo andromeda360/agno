@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 try:
     from redis import Redis
@@ -12,6 +12,7 @@ try:
 except ImportError:
     raise ImportError("`redis` and `redisvl` not installed. Please install using `pip install redis redisvl`")
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/redis/redisdb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.utils.log import log_debug, log_info, logger
@@ -19,6 +20,16 @@ from agno_v2.utils.string import hash_string_sha256
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.search import SearchType
+=======
+from agno.filters import FilterExpr
+from agno.knowledge.document import Document
+from agno.knowledge.embedder import Embedder
+from agno.utils.log import log_debug, log_error, log_info, log_warning
+from agno.utils.string import hash_string_sha256
+from agno.vectordb.base import VectorDb
+from agno.vectordb.distance import Distance
+from agno.vectordb.search import SearchType
+>>>>>>> origin/main:libs/agno/agno/vectordb/redis/redisdb.py
 
 
 class RedisDB(VectorDb):
@@ -167,7 +178,7 @@ class RedisDB(VectorDb):
             else:
                 log_debug(f"Redis index already exists: {self.index_name}")
         except Exception as e:
-            logger.error(f"Error creating Redis index: {e}")
+            log_error(f"Error creating Redis index: {e}")
             raise
 
     async def async_create(self) -> None:
@@ -180,7 +191,7 @@ class RedisDB(VectorDb):
             if "already exists" in str(e).lower():
                 log_debug(f"Redis index already exists: {self.index_name}")
             else:
-                logger.error(f"Error creating Redis index: {e}")
+                log_error(f"Error creating Redis index: {e}")
                 raise
 
     def doc_exists(self, document: Document) -> bool:
@@ -189,7 +200,7 @@ class RedisDB(VectorDb):
             doc_id = document.id or hash_string_sha256(document.content)
             return self.id_exists(doc_id)
         except Exception as e:
-            logger.error(f"Error checking if document exists: {e}")
+            log_error(f"Error checking if document exists: {e}")
             return False
 
     async def async_doc_exists(self, document: Document) -> bool:
@@ -206,7 +217,7 @@ class RedisDB(VectorDb):
             results = await async_index.query(query)
             return len(results) > 0
         except Exception as e:
-            logger.error(f"Error checking if document exists: {e}")
+            log_error(f"Error checking if document exists: {e}")
             return False
 
     def name_exists(self, name: str) -> bool:
@@ -221,7 +232,7 @@ class RedisDB(VectorDb):
             results = self.index.query(query)
             return len(results) > 0
         except Exception as e:
-            logger.error(f"Error checking if name exists: {e}")
+            log_error(f"Error checking if name exists: {e}")
             return False
 
     async def async_name_exists(self, name: str) -> bool:  # type: ignore[override]
@@ -237,7 +248,7 @@ class RedisDB(VectorDb):
             results = await async_index.query(query)
             return len(results) > 0
         except Exception as e:
-            logger.error(f"Error checking if name exists: {e}")
+            log_error(f"Error checking if name exists: {e}")
             return False
 
     def id_exists(self, id: str) -> bool:
@@ -252,7 +263,7 @@ class RedisDB(VectorDb):
             results = self.index.query(query)
             return len(results) > 0
         except Exception as e:
-            logger.error(f"Error checking if ID exists: {e}")
+            log_error(f"Error checking if ID exists: {e}")
             return False
 
     def content_hash_exists(self, content_hash: str) -> bool:
@@ -267,7 +278,7 @@ class RedisDB(VectorDb):
             results = self.index.query(query)
             return len(results) > 0
         except Exception as e:
-            logger.error(f"Error checking if content hash exists: {e}")
+            log_error(f"Error checking if content hash exists: {e}")
             return False
 
     def _parse_redis_hash(self, doc: Document):
@@ -314,7 +325,7 @@ class RedisDB(VectorDb):
             self.index.load(parsed_documents, id_field="id")
             log_debug(f"Inserted {len(documents)} documents with content_hash: {content_hash}")
         except Exception as e:
-            logger.error(f"Error inserting documents: {e}")
+            log_error(f"Error inserting documents: {e}")
             raise
 
     async def async_insert(
@@ -334,7 +345,7 @@ class RedisDB(VectorDb):
             await async_index.load(parsed_documents, id_field="id")
             log_debug(f"Inserted {len(documents)} documents with content_hash: {content_hash}")
         except Exception as e:
-            logger.error(f"Error inserting documents: {e}")
+            log_error(f"Error inserting documents: {e}")
             raise
 
     def upsert_available(self) -> bool:
@@ -368,7 +379,7 @@ class RedisDB(VectorDb):
             # Insert new docs
             self.insert(content_hash, documents, filters)
         except Exception as e:
-            logger.error(f"Error upserting documents: {e}")
+            log_error(f"Error upserting documents: {e}")
             raise
 
     async def async_upsert(
@@ -400,11 +411,17 @@ class RedisDB(VectorDb):
             # Insert new docs
             await self.async_insert(content_hash, documents, filters)
         except Exception as e:
-            logger.error(f"Error upserting documents: {e}")
+            log_error(f"Error upserting documents: {e}")
             raise
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
+    ) -> List[Document]:
         """Search for documents using the specified search type."""
+
+        if filters and isinstance(filters, List):
+            log_warning("Filters Expressions are not supported in Redis. No filters will be applied.")
+            filters = None
         try:
             if self.search_type == SearchType.vector:
                 return self.vector_search(query, limit)
@@ -415,11 +432,11 @@ class RedisDB(VectorDb):
             else:
                 raise ValueError(f"Unsupported search type: {self.search_type}")
         except Exception as e:
-            logger.error(f"Error in search: {e}")
+            log_error(f"Error in search: {e}")
             return []
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     ) -> List[Document]:
         """Async version of search method."""
         return await asyncio.to_thread(self.search, query, limit, filters)
@@ -448,7 +465,7 @@ class RedisDB(VectorDb):
 
             return documents
         except Exception as e:
-            logger.error(f"Error in vector search: {e}")
+            log_error(f"Error in vector search: {e}")
             return []
 
     def keyword_search(self, query: str, limit: int = 5) -> List[Document]:
@@ -471,7 +488,7 @@ class RedisDB(VectorDb):
 
             return documents
         except Exception as e:
-            logger.error(f"Error in keyword search: {e}")
+            log_error(f"Error in keyword search: {e}")
             return []
 
     def hybrid_search(self, query: str, limit: int = 5) -> List[Document]:
@@ -500,7 +517,7 @@ class RedisDB(VectorDb):
 
             return documents
         except Exception as e:
-            logger.error(f"Error in hybrid search: {e}")
+            log_error(f"Error in hybrid search: {e}")
             return []
 
     def drop(self) -> bool:  # type: ignore[override]
@@ -510,7 +527,7 @@ class RedisDB(VectorDb):
             log_debug(f"Deleted Redis index: {self.index_name}")
             return True
         except Exception as e:
-            logger.error(f"Error dropping Redis index: {e}")
+            log_error(f"Error dropping Redis index: {e}")
             return False
 
     async def async_drop(self) -> None:
@@ -520,7 +537,7 @@ class RedisDB(VectorDb):
             await async_index.delete(drop=True)
             log_debug(f"Deleted Redis index: {self.index_name}")
         except Exception as e:
-            logger.error(f"Error dropping Redis index: {e}")
+            log_error(f"Error dropping Redis index: {e}")
             raise
 
     def exists(self) -> bool:
@@ -528,7 +545,7 @@ class RedisDB(VectorDb):
         try:
             return self.index.exists()
         except Exception as e:
-            logger.error(f"Error checking if index exists: {e}")
+            log_error(f"Error checking if index exists: {e}")
             return False
 
     async def async_exists(self) -> bool:
@@ -537,7 +554,7 @@ class RedisDB(VectorDb):
             async_index = await self._get_async_index()
             return await async_index.exists()
         except Exception as e:
-            logger.error(f"Error checking if index exists: {e}")
+            log_error(f"Error checking if index exists: {e}")
             return False
 
     def optimize(self) -> None:
@@ -551,7 +568,7 @@ class RedisDB(VectorDb):
             self.index.clear()
             return True
         except Exception as e:
-            logger.error(f"Error deleting Redis index: {e}")
+            log_error(f"Error deleting Redis index: {e}")
             return False
 
     def delete_by_id(self, id: str) -> bool:
@@ -562,7 +579,7 @@ class RedisDB(VectorDb):
             log_debug(f"Deleted document with id '{id}' from Redis index")
             return result > 0
         except Exception as e:
-            logger.error(f"Error deleting document by ID: {e}")
+            log_error(f"Error deleting document by ID: {e}")
             return False
 
     def delete_by_name(self, name: str) -> bool:
@@ -588,7 +605,7 @@ class RedisDB(VectorDb):
             log_debug(f"Deleted {deleted_count} documents with name '{name}'")
             return deleted_count > 0
         except Exception as e:
-            logger.error(f"Error deleting documents by name: {e}")
+            log_error(f"Error deleting documents by name: {e}")
             return False
 
     def delete_by_metadata(self, metadata: Dict[str, Any]) -> bool:
@@ -626,7 +643,7 @@ class RedisDB(VectorDb):
             log_debug(f"Deleted {deleted_count} documents with metadata {metadata}")
             return deleted_count > 0
         except Exception as e:
-            logger.error(f"Error deleting documents by metadata: {e}")
+            log_error(f"Error deleting documents by metadata: {e}")
             return False
 
     def delete_by_content_id(self, content_id: str) -> bool:
@@ -652,7 +669,7 @@ class RedisDB(VectorDb):
             log_debug(f"Deleted {deleted_count} documents with content_id '{content_id}'")
             return deleted_count > 0
         except Exception as e:
-            logger.error(f"Error deleting documents by content_id: {e}")
+            log_error(f"Error deleting documents by content_id: {e}")
             return False
 
     def update_metadata(self, content_id: str, metadata: Dict[str, Any]) -> None:
@@ -679,7 +696,7 @@ class RedisDB(VectorDb):
 
             log_debug(f"Updated metadata for documents with content_id '{content_id}'")
         except Exception as e:
-            logger.error(f"Error updating metadata: {e}")
+            log_error(f"Error updating metadata: {e}")
             raise
 
     def get_supported_search_types(self) -> List[str]:

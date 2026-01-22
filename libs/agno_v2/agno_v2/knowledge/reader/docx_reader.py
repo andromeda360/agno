@@ -3,12 +3,21 @@ from pathlib import Path
 from typing import IO, Any, List, Optional, Union
 from uuid import uuid4
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/docx_reader.py
 from agno_v2.knowledge.chunking.document import DocumentChunking
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.reader.base import Reader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import log_info, logger
+=======
+from agno.knowledge.chunking.document import DocumentChunking
+from agno.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
+from agno.knowledge.document.base import Document
+from agno.knowledge.reader.base import Reader
+from agno.knowledge.types import ContentType
+from agno.utils.log import log_debug, log_error
+>>>>>>> origin/main:libs/agno/agno/knowledge/reader/docx_reader.py
 
 try:
     from docx import Document as DocxDocument  # type: ignore
@@ -43,11 +52,11 @@ class DocxReader(Reader):
             if isinstance(file, Path):
                 if not file.exists():
                     raise FileNotFoundError(f"Could not find file: {file}")
-                log_info(f"Reading: {file}")
+                log_debug(f"Reading: {file}")
                 docx_document = DocxDocument(str(file))
                 doc_name = name or file.stem
             else:
-                log_info(f"Reading uploaded file: {getattr(file, 'name', 'docx_file')}")
+                log_debug(f"Reading uploaded file: {getattr(file, 'name', 'docx_file')}")
                 docx_document = DocxDocument(file)
                 doc_name = name or (
                     getattr(file, "name", "docx_file").split(".")[0] if hasattr(file, "name") else "docx_file"
@@ -70,7 +79,7 @@ class DocxReader(Reader):
             return documents
 
         except Exception as e:
-            logger.error(f"Error reading file: {e}")
+            log_error(f"Error reading file: {e}")
             return []
 
     async def async_read(self, file: Union[Path, IO[Any]], name: Optional[str] = None) -> List[Document]:
@@ -78,5 +87,5 @@ class DocxReader(Reader):
         try:
             return await asyncio.to_thread(self.read, file, name)
         except Exception as e:
-            logger.error(f"Error reading file asynchronously: {e}")
+            log_error(f"Error reading file asynchronously: {e}")
             return []

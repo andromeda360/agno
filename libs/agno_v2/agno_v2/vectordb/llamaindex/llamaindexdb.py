@@ -1,8 +1,15 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/llamaindex/llamaindexdb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.utils.log import logger
 from agno_v2.vectordb.base import VectorDb
+=======
+from agno.filters import FilterExpr
+from agno.knowledge.document import Document
+from agno.utils.log import log_warning, logger
+from agno.vectordb.base import VectorDb
+>>>>>>> origin/main:libs/agno/agno/vectordb/llamaindex/llamaindexdb.py
 
 try:
     from llama_index.core.retrievers import BaseRetriever
@@ -68,7 +75,9 @@ class LlamaIndexVectorDb(VectorDb):
         logger.warning("LlamaIndexVectorDb.async_upsert() not supported - please check the vectorstore manually.")
         raise NotImplementedError
 
-    def search(self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def search(
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
+    ) -> List[Document]:
         """
         Returns relevant documents matching the query.
 
@@ -82,6 +91,9 @@ class LlamaIndexVectorDb(VectorDb):
         Raises:
             ValueError: If the knowledge retriever is not of type BaseRetriever.
         """
+        if filters is not None:
+            log_warning("Filters are not supported in LlamaIndex. No filters will be applied.")
+
         if not isinstance(self.knowledge_retriever, BaseRetriever):
             raise ValueError(f"Knowledge retriever is not of type BaseRetriever: {self.knowledge_retriever}")
 
@@ -99,7 +111,7 @@ class LlamaIndexVectorDb(VectorDb):
         return documents
 
     async def async_search(
-        self, query: str, limit: int = 5, filters: Optional[Dict[str, Any]] = None
+        self, query: str, limit: int = 5, filters: Optional[Union[Dict[str, Any], List[FilterExpr]]] = None
     ) -> List[Document]:
         return self.search(query, limit, filters)
 

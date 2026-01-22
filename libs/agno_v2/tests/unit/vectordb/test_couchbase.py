@@ -20,8 +20,14 @@ from couchbase.options import ClusterOptions
 from couchbase.result import GetResult, MultiMutationResult
 from couchbase.scope import Scope
 
+<<<<<<< HEAD:libs/agno_v2/tests/unit/vectordb/test_couchbase.py
 from agno_v2.knowledge.document import Document
 from agno_v2.vectordb.couchbase.couchbase import CouchbaseSearch, OpenAIEmbedder
+=======
+from agno.knowledge.document import Document
+from agno.knowledge.embedder.openai import OpenAIEmbedder
+from agno.vectordb.couchbase.couchbase import CouchbaseSearch
+>>>>>>> origin/main:libs/agno/tests/unit/vectordb/test_couchbase.py
 
 
 @pytest.fixture
@@ -86,7 +92,7 @@ def mock_collection(mock_scope):
 
 @pytest.fixture
 def mock_embedder():
-    with patch("agno.vectordb.couchbase.couchbase.OpenAIEmbedder") as mock_embedder:
+    with patch("agno.knowledge.embedder.openai.OpenAIEmbedder") as mock_embedder:
         openai_embedder = Mock(spec=OpenAIEmbedder)
         openai_embedder.get_embedding_and_usage.return_value = ([0.1, 0.2, 0.3], None)
         openai_embedder.get_embedding.return_value = [0.1, 0.2, 0.3]

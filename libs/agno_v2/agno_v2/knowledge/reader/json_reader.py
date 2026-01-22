@@ -5,12 +5,21 @@ from pathlib import Path
 from typing import IO, Any, List, Optional, Union
 from uuid import uuid4
 
+<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/json_reader.py
 from agno_v2.knowledge.chunking.fixed import FixedSizeChunking
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.reader.base import Reader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import log_info
+=======
+from agno.knowledge.chunking.fixed import FixedSizeChunking
+from agno.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
+from agno.knowledge.document.base import Document
+from agno.knowledge.reader.base import Reader
+from agno.knowledge.types import ContentType
+from agno.utils.log import log_debug, log_error
+>>>>>>> origin/main:libs/agno/agno/knowledge/reader/json_reader.py
 
 
 class JSONReader(Reader):
@@ -41,13 +50,13 @@ class JSONReader(Reader):
             if isinstance(path, Path):
                 if not path.exists():
                     raise FileNotFoundError(f"Could not find file: {path}")
-                log_info(f"Reading: {path}")
+                log_debug(f"Reading: {path}")
                 json_name = name or path.name.split(".")[0]
                 json_contents = json.loads(path.read_text(self.encoding or "utf-8"))
 
             elif isinstance(path, BytesIO):
                 json_name = name or path.name.split(".")[0]
-                log_info(f"Reading uploaded file: {json_name}")
+                log_debug(f"Reading uploaded file: {json_name}")
                 path.seek(0)
                 json_contents = json.load(path)
 
@@ -72,7 +81,8 @@ class JSONReader(Reader):
                     chunked_documents.extend(self.chunk_document(document))
                 return chunked_documents
             return documents
-        except Exception:
+        except Exception as e:
+            log_error(f"Error reading: {path}: {e}")
             raise
 
     async def async_read(self, path: Union[Path, IO[Any]], name: Optional[str] = None) -> List[Document]:

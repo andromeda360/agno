@@ -3,9 +3,45 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+<<<<<<< HEAD:libs/agno_v2/tests/unit/vectordb/test_milvusdb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.milvus import Milvus
+=======
+from agno.knowledge.document import Document
+from agno.utils.log import log_debug
+from agno.vectordb.distance import Distance
+
+# Ensure Milvus is available and usable in the current environment.
+# This handles some CI errors when running Milvus in GitHub Actions.
+try:
+    import pymilvus
+
+    log_debug(f"PyMilvus available. Version: {pymilvus.__version__}")
+    MILVUS_AVAILABLE = True
+    MILVUS_SKIP_REASON = ""
+except (ImportError, TypeError) as e:
+    MILVUS_AVAILABLE = False
+    MILVUS_SKIP_REASON = f"Milvus not available: {str(e)}"
+
+pytestmark = pytest.mark.skipif(not MILVUS_AVAILABLE, reason=MILVUS_SKIP_REASON)
+
+if not MILVUS_AVAILABLE:
+    pytest.skip(MILVUS_SKIP_REASON, allow_module_level=True)
+
+
+# Try to import Milvus, skip all tests if not available
+try:
+    from agno.vectordb.milvus import Milvus
+
+    MILVUS_AVAILABLE = True
+except (ImportError, TypeError) as e:
+    MILVUS_AVAILABLE = False
+    MILVUS_SKIP_REASON = f"Milvus not available: {str(e)}"
+
+# Skip test file if Milvus not available
+pytestmark = pytest.mark.skipif(not MILVUS_AVAILABLE, reason=MILVUS_SKIP_REASON if not MILVUS_AVAILABLE else "")
+>>>>>>> origin/main:libs/agno/tests/unit/vectordb/test_milvusdb.py
 
 
 @pytest.fixture
