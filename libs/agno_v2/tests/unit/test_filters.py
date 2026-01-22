@@ -12,7 +12,7 @@ Tests cover:
 
 import pytest
 
-from agno.filters import AND, EQ, GT, IN, LT, NOT, OR, FilterExpr, from_dict
+from agno_v2.filters import AND, EQ, GT, IN, LT, NOT, OR, FilterExpr, from_dict
 
 
 class TestBasicOperators:

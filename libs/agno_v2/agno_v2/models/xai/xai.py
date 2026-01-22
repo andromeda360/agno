@@ -4,19 +4,10 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/xai/xai.py
 from agno_v2.models.message import Citations, UrlCitation
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.models.response import ModelResponse
 from agno_v2.utils.log import log_debug
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.message import Citations, UrlCitation
-from agno.models.openai.like import OpenAILike
-from agno.models.response import ModelResponse
-from agno.utils.log import log_debug
->>>>>>> origin/main:libs/agno/agno/models/xai/xai.py
-
 try:
     from openai.types.chat.chat_completion import ChatCompletion
     from openai.types.chat.chat_completion_chunk import ChatCompletionChunk

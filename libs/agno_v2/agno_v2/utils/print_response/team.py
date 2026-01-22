@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Set, Unio
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/utils/print_response/team.py
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Message
 from agno_v2.models.response import ToolExecution
@@ -13,20 +12,6 @@ from agno_v2.utils.log import log_warning
 from agno_v2.utils.message import get_text_from_message
 from agno_v2.utils.response import build_reasoning_step_panel, create_panel, escape_markdown_tags, format_tool_calls
 from agno_v2.utils.timer import Timer
-=======
-from agno.filters import FilterExpr
-from agno.media import Audio, File, Image, Video
-from agno.models.message import Message
-from agno.models.response import ToolExecution
-from agno.reasoning.step import ReasoningStep
-from agno.run.agent import RunOutput
-from agno.run.team import TeamRunEvent, TeamRunOutput, TeamRunOutputEvent
-from agno.utils.log import log_warning
-from agno.utils.message import get_text_from_message
-from agno.utils.response import build_reasoning_step_panel, create_panel, escape_markdown_tags, format_tool_calls
-from agno.utils.timer import Timer
->>>>>>> origin/main:libs/agno/agno/utils/print_response/team.py
-
 if TYPE_CHECKING:
     from agno_v2.team.team import Team
 

@@ -4,20 +4,11 @@ from typing import Any, Dict, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/perplexity/perplexity.py
 from agno_v2.exceptions import ModelProviderError
 from agno_v2.models.message import Citations, UrlCitation
 from agno_v2.models.metrics import Metrics
 from agno_v2.models.response import ModelResponse
 from agno_v2.utils.log import log_debug, log_warning
-=======
-from agno.exceptions import ModelAuthenticationError, ModelProviderError
-from agno.models.message import Citations, UrlCitation
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse
-from agno.utils.log import log_debug, log_warning
->>>>>>> origin/main:libs/agno/agno/models/perplexity/perplexity.py
-
 try:
     from openai.types.chat.chat_completion import ChatCompletion
     from openai.types.chat.chat_completion_chunk import (

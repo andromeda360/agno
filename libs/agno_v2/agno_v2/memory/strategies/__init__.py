@@ -1,8 +1,8 @@
 """Memory optimization strategy implementations."""
 
-from agno.memory.strategies.base import MemoryOptimizationStrategy
-from agno.memory.strategies.summarize import SummarizeStrategy
-from agno.memory.strategies.types import (
+from agno_v2.memory.strategies.base import MemoryOptimizationStrategy
+from agno_v2.memory.strategies.summarize import SummarizeStrategy
+from agno_v2.memory.strategies.types import (
     MemoryOptimizationStrategyFactory,
     MemoryOptimizationStrategyType,
 )

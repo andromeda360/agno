@@ -13,23 +13,12 @@ try:
 except ImportError:
     raise ImportError("The `chromadb` package is not installed. Please install it via `pip install chromadb`.")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/chroma/chromadb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
 from agno_v2.utils.log import log_debug, log_error, log_info, logger
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.knowledge.reranker.base import Reranker
-from agno.utils.log import log_debug, log_error, log_info, log_warning, logger
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
->>>>>>> origin/main:libs/agno/agno/vectordb/chroma/chromadb.py
-
 
 class ChromaDb(VectorDb):
     def __init__(

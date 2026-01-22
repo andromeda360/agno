@@ -9,8 +9,8 @@ Changes:
 import time
 from typing import Any, List, Tuple
 
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.utils.log import log_error, log_info, log_warning
+from agno_v2.db.base import AsyncBaseDb, BaseDb
+from agno_v2.utils.log import log_error, log_info, log_warning
 
 try:
     from sqlalchemy import text

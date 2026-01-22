@@ -6,7 +6,6 @@ import httpx
 from pydantic import BaseModel
 from typing_extensions import Literal
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/openai/responses.py
 from agno_v2.exceptions import ModelProviderError
 from agno_v2.media import File
 from agno_v2.models.base import Model
@@ -17,20 +16,6 @@ from agno_v2.run.agent import RunOutput
 from agno_v2.utils.log import log_debug, log_error, log_warning
 from agno_v2.utils.models.openai_responses import images_to_message
 from agno_v2.utils.models.schema_utils import get_response_schema_for_provider
-=======
-from agno.exceptions import ModelAuthenticationError, ModelProviderError
-from agno.media import File
-from agno.models.base import Model
-from agno.models.message import Citations, Message, UrlCitation
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse
-from agno.run.agent import RunOutput
-from agno.utils.http import get_default_async_client, get_default_sync_client
-from agno.utils.log import log_debug, log_error, log_warning
-from agno.utils.models.openai_responses import images_to_message
-from agno.utils.models.schema_utils import get_response_schema_for_provider
->>>>>>> origin/main:libs/agno/agno/models/openai/responses.py
-
 try:
     from openai import APIConnectionError, APIStatusError, AsyncOpenAI, OpenAI, RateLimitError
     from openai.types.responses import Response, ResponseReasoningItem, ResponseStreamEvent, ResponseUsage

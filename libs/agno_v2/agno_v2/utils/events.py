@@ -35,7 +35,6 @@ from agno_v2.run.agent import (
     ToolCallCompletedEvent,
     ToolCallStartedEvent,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/utils/events.py
 from agno_v2.run.team import MemoryUpdateCompletedEvent as TeamMemoryUpdateCompletedEvent
 from agno_v2.run.team import MemoryUpdateStartedEvent as TeamMemoryUpdateStartedEvent
 from agno_v2.run.team import OutputModelResponseCompletedEvent as TeamOutputModelResponseCompletedEvent
@@ -61,35 +60,6 @@ from agno_v2.run.team import TeamRunEvent, TeamRunInput, TeamRunOutput, TeamRunO
 from agno_v2.run.team import ToolCallCompletedEvent as TeamToolCallCompletedEvent
 from agno_v2.run.team import ToolCallStartedEvent as TeamToolCallStartedEvent
 from agno_v2.session.summary import SessionSummary
-=======
-from agno.run.requirement import RunRequirement
-from agno.run.team import MemoryUpdateCompletedEvent as TeamMemoryUpdateCompletedEvent
-from agno.run.team import MemoryUpdateStartedEvent as TeamMemoryUpdateStartedEvent
-from agno.run.team import OutputModelResponseCompletedEvent as TeamOutputModelResponseCompletedEvent
-from agno.run.team import OutputModelResponseStartedEvent as TeamOutputModelResponseStartedEvent
-from agno.run.team import ParserModelResponseCompletedEvent as TeamParserModelResponseCompletedEvent
-from agno.run.team import ParserModelResponseStartedEvent as TeamParserModelResponseStartedEvent
-from agno.run.team import PostHookCompletedEvent as TeamPostHookCompletedEvent
-from agno.run.team import PostHookStartedEvent as TeamPostHookStartedEvent
-from agno.run.team import PreHookCompletedEvent as TeamPreHookCompletedEvent
-from agno.run.team import PreHookStartedEvent as TeamPreHookStartedEvent
-from agno.run.team import ReasoningCompletedEvent as TeamReasoningCompletedEvent
-from agno.run.team import ReasoningStartedEvent as TeamReasoningStartedEvent
-from agno.run.team import ReasoningStepEvent as TeamReasoningStepEvent
-from agno.run.team import RunCancelledEvent as TeamRunCancelledEvent
-from agno.run.team import RunCompletedEvent as TeamRunCompletedEvent
-from agno.run.team import RunContentCompletedEvent as TeamRunContentCompletedEvent
-from agno.run.team import RunContentEvent as TeamRunContentEvent
-from agno.run.team import RunErrorEvent as TeamRunErrorEvent
-from agno.run.team import RunStartedEvent as TeamRunStartedEvent
-from agno.run.team import SessionSummaryCompletedEvent as TeamSessionSummaryCompletedEvent
-from agno.run.team import SessionSummaryStartedEvent as TeamSessionSummaryStartedEvent
-from agno.run.team import TeamRunEvent, TeamRunInput, TeamRunOutput, TeamRunOutputEvent
-from agno.run.team import ToolCallCompletedEvent as TeamToolCallCompletedEvent
-from agno.run.team import ToolCallStartedEvent as TeamToolCallStartedEvent
-from agno.session.summary import SessionSummary
->>>>>>> origin/main:libs/agno/agno/utils/events.py
-
 
 def create_team_run_started_event(from_run_response: TeamRunOutput) -> TeamRunStartedEvent:
     return TeamRunStartedEvent(

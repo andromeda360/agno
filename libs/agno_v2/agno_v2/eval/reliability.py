@@ -3,29 +3,15 @@ from os import getenv
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/eval/reliability.py
 from agno_v2.db.base import AsyncBaseDb, BaseDb
-=======
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.run.team import TeamRunOutput
->>>>>>> origin/main:libs/agno/agno/eval/reliability.py
-
 if TYPE_CHECKING:
     from rich.console import Console
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/eval/reliability.py
 from agno_v2.agent import RunOutput
 from agno_v2.db.schemas.evals import EvalType
 from agno_v2.eval.utils import async_log_eval, log_eval_run, store_result_in_file
 from agno_v2.run.team import TeamRunOutput
 from agno_v2.utils.log import logger
-=======
-from agno.agent import RunOutput
-from agno.db.schemas.evals import EvalType
-from agno.eval.utils import async_log_eval, log_eval_run, store_result_in_file
-from agno.utils.log import logger
->>>>>>> origin/main:libs/agno/agno/eval/reliability.py
-
 
 @dataclass
 class ReliabilityResult:
@@ -73,7 +59,7 @@ class ReliabilityEval:
     # If set, results will be saved in the given file path
     file_path_to_save_results: Optional[str] = None
     # Enable debug logs
-    debug_mode: bool = getenv("AGNO_V2_DEBUG", "false").lower() == "true"
+    debug_mode: bool = getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true"
     # The database to store Evaluation results
     db: Optional[Union[BaseDb, AsyncBaseDb]] = None
 

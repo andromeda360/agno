@@ -4,23 +4,11 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/base.py
 from agno_v2.db.schemas import UserMemory
 from agno_v2.db.schemas.culture import CulturalKnowledge
 from agno_v2.db.schemas.evals import EvalFilterType, EvalRunRecord, EvalType
 from agno_v2.db.schemas.knowledge import KnowledgeRow
 from agno_v2.session import Session
-=======
-if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
-
-from agno.db.schemas import UserMemory
-from agno.db.schemas.culture import CulturalKnowledge
-from agno.db.schemas.evals import EvalFilterType, EvalRunRecord, EvalType
-from agno.db.schemas.knowledge import KnowledgeRow
-from agno.session import Session
->>>>>>> origin/main:libs/agno/agno/db/base.py
-
 
 class SessionType(str, Enum):
     AGENT = "agent"

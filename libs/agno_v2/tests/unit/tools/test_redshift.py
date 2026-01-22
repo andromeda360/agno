@@ -7,7 +7,7 @@ try:
 except ImportError:
     raise ImportError("`redshift_connector` not installed. Please install using `pip install redshift-connector`.")
 
-from agno.tools.redshift import RedshiftTools
+from agno_v2.tools.redshift import RedshiftTools
 
 # --- Mock Data for Tests ---
 MOCK_TABLES_RESULT = [("employees",), ("departments",), ("projects",)]

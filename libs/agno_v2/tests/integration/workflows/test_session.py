@@ -465,7 +465,7 @@ async def test_workflow_with_base_model_content(shared_db):
 
     from pydantic import BaseModel
 
-    from agno.db.base import SessionType
+    from agno_v2.db.base import SessionType
 
     session_id = "session_base_model_content"
 

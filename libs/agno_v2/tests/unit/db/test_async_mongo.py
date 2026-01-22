@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pymongo import AsyncMongoClient
 
-from agno.db.mongo import AsyncMongoDb
+from agno_v2.db.mongo import AsyncMongoDb
 
 
 def test_id_is_deterministic():
@@ -260,7 +260,7 @@ def test_detect_pymongo_async_client_type():
 def test_auto_select_preferred_client_from_url():
     """Test that preferred client is auto-selected when creating from URL"""
     # Import availability flags from the module
-    from agno.db.mongo.async_mongo import MOTOR_AVAILABLE, PYMONGO_ASYNC_AVAILABLE
+    from agno_v2.db.mongo.async_mongo import MOTOR_AVAILABLE, PYMONGO_ASYNC_AVAILABLE
 
     db = AsyncMongoDb(db_url="mongodb://localhost:27017", db_name="test_db")
 

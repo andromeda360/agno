@@ -3,7 +3,7 @@
 import json
 from unittest.mock import AsyncMock, patch
 
-from agno.workflow.workflow import Workflow
+from agno_v2.workflow.workflow import Workflow
 
 
 def test_create_workflow_run(test_os_client, test_workflow: Workflow):

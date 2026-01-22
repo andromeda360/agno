@@ -4,20 +4,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/session/workflow.py
 from agno_v2.run.workflow import WorkflowRunOutput
 from agno_v2.utils.log import logger
-=======
-from pydantic import BaseModel
-
-from agno.models.message import Message
-from agno.run.agent import RunOutput
-from agno.run.base import RunStatus
-from agno.run.team import TeamRunOutput
-from agno.run.workflow import WorkflowRunOutput
-from agno.utils.log import log_debug, logger
->>>>>>> origin/main:libs/agno/agno/session/workflow.py
-
 
 @dataclass
 class WorkflowSession:

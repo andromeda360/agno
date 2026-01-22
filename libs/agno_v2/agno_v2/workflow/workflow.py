@@ -51,18 +51,10 @@ from agno_v2.run.workflow import (
     WorkflowRunOutputEvent,
     WorkflowStartedEvent,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/workflow/workflow.py
 from agno_v2.session.workflow import WorkflowSession
 from agno_v2.team.team import Team
 from agno_v2.utils.common import is_typed_dict, validate_typed_dict
-from agno_v2.utils.log import (
-=======
-from agno.session.workflow import WorkflowChatInteraction, WorkflowSession
-from agno.team.team import Team
-from agno.utils.common import is_typed_dict, validate_typed_dict
-from agno.utils.log import (
->>>>>>> origin/main:libs/agno/agno/workflow/workflow.py
-    log_debug,
+from agno_v2.utils.log import (    log_debug,
     log_error,
     log_warning,
     logger,
@@ -1115,10 +1107,10 @@ class Workflow:
 
     def _set_debug(self) -> None:
         """Set debug mode and configure logging"""
-        if self.debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
+        if self.debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
             use_workflow_logger()
             debug_level: Literal[1, 2] = (
-                cast(Literal[1, 2], int(env)) if (env := getenv("AGNO_DEBUG_LEVEL")) in ("1", "2") else self.debug_level
+                cast(Literal[1, 2], int(env)) if (env := getenv("AGNO_V2_DEBUG_LEVEL")) in ("1", "2") else self.debug_level
             )
 
             self.debug_mode = True
@@ -1139,7 +1131,7 @@ class Workflow:
     def _set_telemetry(self) -> None:
         """Override telemetry settings based on environment variables."""
 
-        telemetry_env = getenv("AGNO_V2_TELEMETRY")
+        telemetry_env = getenv("AGNO_V2_V2_TELEMETRY")
         if telemetry_env is not None:
             self.telemetry = telemetry_env.lower() == "true"
 

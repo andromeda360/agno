@@ -4,12 +4,12 @@ from textwrap import dedent
 from typing import List
 from uuid import uuid4
 
-from agno.db.schemas import UserMemory
-from agno.memory.strategies import MemoryOptimizationStrategy
-from agno.models.base import Model
-from agno.models.message import Message
-from agno.utils.dttm import now_epoch_s
-from agno.utils.log import log_debug
+from agno_v2.db.schemas import UserMemory
+from agno_v2.memory.strategies import MemoryOptimizationStrategy
+from agno_v2.models.base import Model
+from agno_v2.models.message import Message
+from agno_v2.utils.dttm import now_epoch_s
+from agno_v2.utils.log import log_debug
 
 
 class SummarizeStrategy(MemoryOptimizationStrategy):

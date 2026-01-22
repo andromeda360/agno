@@ -4,8 +4,8 @@ import sys
 from unittest.mock import MagicMock, patch
 
 # Import log_warning module before patching __import__ to avoid recursion
-from agno.utils import log
-from agno.utils.tokens import count_tokens
+from agno_v2.utils import log
+from agno_v2.utils.tokens import count_tokens
 
 
 def test_count_tokens_basic():

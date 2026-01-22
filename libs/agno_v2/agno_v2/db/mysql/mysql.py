@@ -6,19 +6,11 @@ from uuid import uuid4
 from sqlalchemy import ForeignKey, Index, UniqueConstraint
 
 if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
+    from agno_v2.tracing.schemas import Span, Trace
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/mysql/mysql.py
 from agno_v2.db.base import BaseDb, SessionType
 from agno_v2.db.mysql.schemas import get_table_schema_definition
-from agno_v2.db.mysql.utils import (
-=======
-from agno.db.base import BaseDb, SessionType
-from agno.db.migrations.manager import MigrationManager
-from agno.db.mysql.schemas import get_table_schema_definition
-from agno.db.mysql.utils import (
->>>>>>> origin/main:libs/agno/agno/db/mysql/mysql.py
-    apply_sorting,
+from agno_v2.db.mysql.utils import (    apply_sorting,
     bulk_upsert_metrics,
     calculate_date_metrics,
     create_schema,
@@ -2560,7 +2552,7 @@ class MySQLDb(BaseDb):
             For other filters, the most recent trace is returned.
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             table = self._get_table(table_type="traces")
             if table is None:
@@ -2626,7 +2618,7 @@ class MySQLDb(BaseDb):
             tuple[List[Trace], int]: Tuple of (list of matching traces, total count).
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             log_debug(
                 f"get_traces called with filters: run_id={run_id}, session_id={session_id}, user_id={user_id}, agent_id={agent_id}, page={page}, limit={limit}"
@@ -2854,7 +2846,7 @@ class MySQLDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table = self._get_table(table_type="spans")
             if table is None:
@@ -2888,7 +2880,7 @@ class MySQLDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table = self._get_table(table_type="spans")
             if table is None:

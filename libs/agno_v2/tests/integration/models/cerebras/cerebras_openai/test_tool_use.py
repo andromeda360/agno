@@ -1,16 +1,8 @@
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/models/cerebras/cerebras_openai/test_tool_use.py
 from agno_v2.agent import Agent
 from agno_v2.models.cerebras import CerebrasOpenAI
 from agno_v2.tools.yfinance import YFinanceTools
-=======
-from agno.agent import Agent
-from agno.models.cerebras import CerebrasOpenAI
-from agno.tools.duckduckgo import DuckDuckGoTools
-from agno.tools.yfinance import YFinanceTools
->>>>>>> origin/main:libs/agno/tests/integration/models/cerebras/cerebras_openai/test_tool_use.py
-
 
 def test_tool_use():
     agent = Agent(

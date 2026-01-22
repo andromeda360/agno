@@ -9,20 +9,11 @@ try:
 except ImportError:
     raise ImportError("`aiofiles` not installed. Please install it with `pip install aiofiles`")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/field_labeled_csv_reader.py
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.reader.base import Reader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import logger
-=======
-from agno.knowledge.chunking.strategy import ChunkingStrategyType
-from agno.knowledge.document.base import Document
-from agno.knowledge.reader.base import Reader
-from agno.knowledge.types import ContentType
-from agno.utils.log import log_debug, log_error, log_warning
->>>>>>> origin/main:libs/agno/agno/knowledge/reader/field_labeled_csv_reader.py
-
 
 class FieldLabeledCSVReader(Reader):
     """Reader for CSV files that converts each row to a field-labeled document."""

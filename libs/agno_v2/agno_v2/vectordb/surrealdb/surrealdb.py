@@ -11,21 +11,11 @@ except ImportError as e:
     msg = "The `surrealdb` package is not installed. Please install it via `pip install surrealdb`."
     raise ImportError(msg) from e
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/surrealdb/surrealdb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.utils.log import log_debug, log_error, log_info
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.utils.log import log_debug, log_error, log_info, log_warning
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
->>>>>>> origin/main:libs/agno/agno/vectordb/surrealdb/surrealdb.py
-
 
 class SurrealDb(VectorDb):
     """SurrealDB Vector Database implementation supporting both sync and async operations."""

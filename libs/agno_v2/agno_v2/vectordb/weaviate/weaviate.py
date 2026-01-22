@@ -18,7 +18,6 @@ try:
 except ImportError:
     raise ImportError("Weaviate is not installed. Install using 'pip install weaviate-client'.")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/weaviate/weaviate.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
@@ -26,17 +25,6 @@ from agno_v2.utils.log import log_debug, log_info, logger
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.search import SearchType
 from agno_v2.vectordb.weaviate.index import Distance, VectorIndex
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.knowledge.reranker.base import Reranker
-from agno.utils.log import log_debug, log_info, log_warning, logger
-from agno.vectordb.base import VectorDb
-from agno.vectordb.search import SearchType
-from agno.vectordb.weaviate.index import Distance, VectorIndex
->>>>>>> origin/main:libs/agno/agno/vectordb/weaviate/weaviate.py
-
 
 class Weaviate(VectorDb):
     """

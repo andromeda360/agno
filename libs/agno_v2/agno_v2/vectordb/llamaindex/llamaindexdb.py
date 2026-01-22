@@ -1,16 +1,8 @@
 from typing import Any, Callable, Dict, List, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/llamaindex/llamaindexdb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.utils.log import logger
 from agno_v2.vectordb.base import VectorDb
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.utils.log import log_warning, logger
-from agno.vectordb.base import VectorDb
->>>>>>> origin/main:libs/agno/agno/vectordb/llamaindex/llamaindexdb.py
-
 try:
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import NodeWithScore

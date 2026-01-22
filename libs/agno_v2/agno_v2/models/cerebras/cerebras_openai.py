@@ -5,17 +5,9 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/cerebras/cerebras_openai.py
 from agno_v2.models.message import Message
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.utils.log import log_debug
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.message import Message
-from agno.models.openai.like import OpenAILike
-from agno.utils.log import log_debug
->>>>>>> origin/main:libs/agno/agno/models/cerebras/cerebras_openai.py
-
 
 @dataclass
 class CerebrasOpenAI(OpenAILike):

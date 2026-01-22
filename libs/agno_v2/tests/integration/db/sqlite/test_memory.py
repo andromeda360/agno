@@ -4,8 +4,8 @@ from typing import cast
 
 import pytest
 
-from agno.db.schemas.memory import UserMemory
-from agno.db.sqlite.sqlite import SqliteDb
+from agno_v2.db.schemas.memory import UserMemory
+from agno_v2.db.sqlite.sqlite import SqliteDb
 
 
 @pytest.fixture(autouse=True)

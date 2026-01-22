@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from agno.db.schemas import UserMemory
-from agno.models.base import Model
-from agno.utils.tokens import count_tokens as count_text_tokens
+from agno_v2.db.schemas import UserMemory
+from agno_v2.models.base import Model
+from agno_v2.utils.tokens import count_tokens as count_text_tokens
 
 
 class MemoryOptimizationStrategy(ABC):

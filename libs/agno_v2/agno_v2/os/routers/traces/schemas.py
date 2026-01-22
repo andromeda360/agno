@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from agno.os.utils import format_duration_ms
+from agno_v2.os.utils import format_duration_ms
 
 
 def _derive_span_type(span: Any) -> str:

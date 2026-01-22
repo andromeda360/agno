@@ -5,10 +5,10 @@ from io import BytesIO
 from typing import Any, List, Optional
 from uuid import uuid4
 
-from agno.media import Image
-from agno.tools import Toolkit
-from agno.tools.function import ToolResult
-from agno.utils.log import log_debug, logger
+from agno_v2.media import Image
+from agno_v2.tools import Toolkit
+from agno_v2.tools.function import ToolResult
+from agno_v2.utils.log import log_debug, logger
 
 try:
     from google import genai

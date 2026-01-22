@@ -4,28 +4,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/sqlite/sqlite.py
 from agno_v2.db.base import BaseDb, SessionType
 from agno_v2.db.schemas.culture import CulturalKnowledge
 from agno_v2.db.schemas.evals import EvalFilterType, EvalRunRecord, EvalType
 from agno_v2.db.schemas.knowledge import KnowledgeRow
 from agno_v2.db.schemas.memory import UserMemory
 from agno_v2.db.sqlite.schemas import get_table_schema_definition
-from agno_v2.db.sqlite.utils import (
-=======
-if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
-
-from agno.db.base import BaseDb, SessionType
-from agno.db.migrations.manager import MigrationManager
-from agno.db.schemas.culture import CulturalKnowledge
-from agno.db.schemas.evals import EvalFilterType, EvalRunRecord, EvalType
-from agno.db.schemas.knowledge import KnowledgeRow
-from agno.db.schemas.memory import UserMemory
-from agno.db.sqlite.schemas import get_table_schema_definition
-from agno.db.sqlite.utils import (
->>>>>>> origin/main:libs/agno/agno/db/sqlite/sqlite.py
-    apply_sorting,
+from agno_v2.db.sqlite.utils import (    apply_sorting,
     bulk_upsert_metrics,
     calculate_date_metrics,
     deserialize_cultural_knowledge_from_db,
@@ -2267,7 +2252,7 @@ class SqliteDb(BaseDb):
             For other filters, the most recent trace is returned.
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             table = self._get_table(table_type="traces")
             if table is None:
@@ -2335,7 +2320,7 @@ class SqliteDb(BaseDb):
         try:
             from sqlalchemy import func
 
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             log_debug(
                 f"get_traces called with filters: run_id={run_id}, session_id={session_id}, user_id={user_id}, agent_id={agent_id}, page={page}, limit={limit}"
@@ -2566,7 +2551,7 @@ class SqliteDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table = self._get_table(table_type="spans")
             if table is None:
@@ -2598,7 +2583,7 @@ class SqliteDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table = self._get_table(table_type="spans")
             if table is None:

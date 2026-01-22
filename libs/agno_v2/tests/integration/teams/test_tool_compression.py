@@ -1,9 +1,9 @@
 import pytest
 
-from agno.agent import Agent
-from agno.compression.manager import CompressionManager
-from agno.models.openai import OpenAIChat
-from agno.team.team import Team
+from agno_v2.agent import Agent
+from agno_v2.compression.manager import CompressionManager
+from agno_v2.models.openai import OpenAIChat
+from agno_v2.team.team import Team
 
 
 def search_tool(query: str) -> str:

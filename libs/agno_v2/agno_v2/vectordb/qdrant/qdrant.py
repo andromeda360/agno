@@ -9,7 +9,6 @@ except ImportError:
         "The `qdrant-client` package is not installed. Please install it via `pip install qdrant-client`."
     )
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/qdrant/qdrant.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
@@ -17,17 +16,6 @@ from agno_v2.utils.log import log_debug, log_error, log_info, log_warning
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.search import SearchType
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.knowledge.reranker.base import Reranker
-from agno.utils.log import log_debug, log_error, log_info, log_warning
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
-from agno.vectordb.search import SearchType
->>>>>>> origin/main:libs/agno/agno/vectordb/qdrant/qdrant.py
-
 DEFAULT_DENSE_VECTOR_NAME = "dense"
 DEFAULT_SPARSE_VECTOR_NAME = "sparse"
 DEFAULT_SPARSE_MODEL = "Qdrant/bm25"

@@ -3,18 +3,9 @@ from pathlib import Path
 
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/knowledge/test_pdf_knowledge.py
 from agno_v2.agent import Agent
 from agno_v2.knowledge.knowledge import Knowledge
 from agno_v2.vectordb.lancedb.lance_db import LanceDb
-=======
-from agno.agent import Agent
-from agno.db.sqlite.sqlite import SqliteDb
-from agno.knowledge.knowledge import Knowledge
-from agno.vectordb.chroma import ChromaDb
-from agno.vectordb.lancedb.lance_db import LanceDb
->>>>>>> origin/main:libs/agno/tests/integration/knowledge/test_pdf_knowledge.py
-
 
 @pytest.fixture
 def setup_vector_db():

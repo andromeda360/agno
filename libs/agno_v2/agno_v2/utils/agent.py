@@ -1,7 +1,6 @@
 from asyncio import Future, Task
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Dict, Iterator, List, Optional, Sequence, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/utils/agent.py
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Message
 from agno_v2.models.metrics import Metrics
@@ -10,20 +9,7 @@ from agno_v2.run.agent import RunEvent, RunInput, RunOutput, RunOutputEvent
 from agno_v2.run.team import RunOutputEvent as TeamRunOutputEvent
 from agno_v2.run.team import TeamRunOutput
 from agno_v2.session import AgentSession, TeamSession
-from agno_v2.utils.events import (
-=======
-from agno.media import Audio, File, Image, Video
-from agno.models.message import Message
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse
-from agno.run import RunContext
-from agno.run.agent import RunEvent, RunInput, RunOutput, RunOutputEvent
-from agno.run.team import RunOutputEvent as TeamRunOutputEvent
-from agno.run.team import TeamRunOutput
-from agno.session import AgentSession, TeamSession, WorkflowSession
-from agno.utils.events import (
->>>>>>> origin/main:libs/agno/agno/utils/agent.py
-    create_memory_update_completed_event,
+from agno_v2.utils.events import (    create_memory_update_completed_event,
     create_memory_update_started_event,
     create_team_memory_update_completed_event,
     create_team_memory_update_started_event,

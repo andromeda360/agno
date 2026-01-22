@@ -5,15 +5,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 import httpx
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/vertexai/claude.py
 from agno_v2.models.anthropic import Claude as AnthropicClaude
-=======
-from agno.models.anthropic import Claude as AnthropicClaude
-from agno.utils.http import get_default_async_client, get_default_sync_client
-from agno.utils.log import log_debug, log_warning
-from agno.utils.models.claude import format_tools_for_model
->>>>>>> origin/main:libs/agno/agno/models/vertexai/claude.py
-
 try:
     from anthropic import AnthropicVertex, AsyncAnthropicVertex
 except ImportError as e:

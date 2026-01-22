@@ -68,13 +68,7 @@ from os import getenv
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/tools/google_drive.py
 from agno_v2.tools import Toolkit
-=======
-from agno.tools import Toolkit
-from agno.utils.log import log_error
->>>>>>> origin/main:libs/agno/agno/tools/google_drive.py
-
 try:
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials

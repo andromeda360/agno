@@ -24,7 +24,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
 from agno_v2.exceptions import AgentRunException
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Citations, Message
@@ -39,23 +38,6 @@ from agno_v2.utils.custom_message_logger import log_message
 from agno_v2.utils.log import log_debug, log_error, log_info, log_warning
 from agno_v2.utils.timer import Timer
 from agno_v2.utils.tools import get_function_call_for_tool_call, get_function_call_for_tool_execution
-=======
-from agno.exceptions import AgentRunException
-from agno.media import Audio, File, Image, Video
-from agno.models.message import Citations, Message
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse, ModelResponseEvent, ToolExecution
-from agno.run.agent import CustomEvent, RunContentEvent, RunOutput, RunOutputEvent
-from agno.run.requirement import RunRequirement
-from agno.run.team import RunContentEvent as TeamRunContentEvent
-from agno.run.team import TeamRunOutput, TeamRunOutputEvent
-from agno.run.workflow import WorkflowRunOutputEvent
-from agno.tools.function import Function, FunctionCall, FunctionExecutionResult, UserInputField
-from agno.utils.log import log_debug, log_error, log_info, log_warning
-from agno.utils.timer import Timer
-from agno.utils.tools import get_function_call_for_tool_call, get_function_call_for_tool_execution
->>>>>>> origin/main:libs/agno/agno/models/base.py
-
 
 @dataclass
 class MessageData:
@@ -89,7 +71,7 @@ def _log_messages(messages: List[Message]) -> None:
     import os
 
     # Get truncation length from environment variable
-    truncate_length = int(os.getenv("AGNO_V2_SYSTEM_MESSAGE_LOG_TRUNCATE_LENGTH", "0"))
+    truncate_length = int(os.getenv("AGNO_V2_V2_SYSTEM_MESSAGE_LOG_TRUNCATE_LENGTH", "0"))
 
     for m in messages:
         # Don't log metrics for input messages
@@ -379,14 +361,9 @@ class Model(ABC):
             _log_messages(messages)
             model_response = ModelResponse()
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
         if self.log_messages:
             _log_messages(messages)
         model_response = ModelResponse()
-=======
-            function_call_count = 0
->>>>>>> origin/main:libs/agno/agno/models/base.py
-
             _tool_dicts = self._format_tools(tools) if tools is not None else []
             _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
 
@@ -587,17 +564,11 @@ class Model(ABC):
             _log_messages(messages)
             model_response = ModelResponse()
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
         log_debug(f"{self.get_provider()} Async Response Start", center=True, symbol="-")
         log_debug(f"Model: {self.id}", center=True, symbol="-")
         if self.log_messages:
             _log_messages(messages)
         model_response = ModelResponse()
-=======
-            _tool_dicts = self._format_tools(tools) if tools is not None else []
-            _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
->>>>>>> origin/main:libs/agno/agno/models/base.py
-
             _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
 
             function_call_count = 0
@@ -997,7 +968,6 @@ class Model(ABC):
         """
         Generate a streaming response from the model.
         """
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
 
         # Check cache if enabled - capture key BEFORE streaming to avoid mismatch
         cache_key = None
@@ -1054,16 +1024,7 @@ class Model(ABC):
                     model_response=model_response,
                     response_format=response_format,
                     tools=_tool_dicts,
-                    tool_choice=tool_choice or self._tool_choice,
-=======
-        try:
-            # Check cache if enabled - capture key BEFORE streaming to avoid mismatch
-            cache_key = None
-            if self.cache_response:
-                cache_key = self._get_model_cache_key(
-                    messages, stream=True, response_format=response_format, tools=tools
->>>>>>> origin/main:libs/agno/agno/models/base.py
-                )
+                    tool_choice=tool_choice or self._tool_choice,                )
                 cached_data = self._get_cached_model_response(cache_key)
 
                 if cached_data:
@@ -1300,16 +1261,10 @@ class Model(ABC):
             log_debug(f"Model: {self.id}", center=True, symbol="-")
             _log_messages(messages)
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
         log_debug(f"{self.get_provider()} Async Response Stream Start", center=True, symbol="-")
         log_debug(f"Model: {self.id}", center=True, symbol="-")
         if self.log_messages:
             _log_messages(messages)
-=======
-            _tool_dicts = self._format_tools(tools) if tools is not None else []
-            _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
->>>>>>> origin/main:libs/agno/agno/models/base.py
-
             _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
 
             function_call_count = 0
@@ -1724,7 +1679,6 @@ class Model(ABC):
         function_call_output: str = ""
 
         if isinstance(function_execution_result.result, (GeneratorType, collections.abc.Iterator)):
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
             for item in function_execution_result.result:
                 # This function yields agent/team/workflow run events
                 if (
@@ -1757,21 +1711,7 @@ class Model(ABC):
 
                     if isinstance(item, WorkflowCompletedEvent):
                         if item.content is not None:
-                            if isinstance(item.content, BaseModel):
-=======
-            try:
-                for item in function_execution_result.result:
-                    # This function yields agent/team/workflow run events
-                    if (
-                        isinstance(item, tuple(get_args(RunOutputEvent)))
-                        or isinstance(item, tuple(get_args(TeamRunOutputEvent)))
-                        or isinstance(item, tuple(get_args(WorkflowRunOutputEvent)))
-                    ):
-                        # We only capture content events for output accumulation
-                        if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
-                            if item.content is not None and isinstance(item.content, BaseModel):
->>>>>>> origin/main:libs/agno/agno/models/base.py
-                                function_call_output += item.content.model_dump_json()
+                            if isinstance(item.content, BaseModel):                                function_call_output += item.content.model_dump_json()
                             else:
                                 # Capture output
                                 function_call_output += item.content or ""
@@ -1783,7 +1723,7 @@ class Model(ABC):
                             function_call_output += str(item)
 
                         # For WorkflowCompletedEvent, extract content for final output
-                        from agno.run.workflow import WorkflowCompletedEvent
+                        from agno_v2.run.workflow import WorkflowCompletedEvent
 
                         if isinstance(item, WorkflowCompletedEvent):
                             if item.content is not None:
@@ -2304,7 +2244,6 @@ class Model(ABC):
                 function_call_output = async_function_call_output
                 # Events from async generators were already yielded in real-time above
             elif isinstance(function_call.result, (GeneratorType, collections.abc.Iterator)):
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/base.py
                 for item in function_call.result:
                     # This function yields agent/team/workflow run events
                     if isinstance(
@@ -2320,21 +2259,7 @@ class Model(ABC):
                             if (
                                 function_call.function.agent_ids_to_return_content_for is None
                                 or agent_id in function_call.function.agent_ids_to_return_content_for
-                            ):
-=======
-                try:
-                    for item in function_call.result:
-                        # This function yields agent/team/workflow run events
-                        if isinstance(
-                            item,
-                            tuple(get_args(RunOutputEvent))
-                            + tuple(get_args(TeamRunOutputEvent))
-                            + tuple(get_args(WorkflowRunOutputEvent)),
-                        ):
-                            # We only capture content events
-                            if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
->>>>>>> origin/main:libs/agno/agno/models/base.py
-                                if item.content is not None and isinstance(item.content, BaseModel):
+                            ):                                if item.content is not None and isinstance(item.content, BaseModel):
                                     function_call_output += item.content.model_dump_json()
                                 else:
                                     # Capture output

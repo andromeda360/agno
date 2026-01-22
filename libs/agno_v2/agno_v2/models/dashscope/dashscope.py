@@ -4,14 +4,8 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/dashscope/dashscope.py
 from agno_v2.exceptions import ModelProviderError
 from agno_v2.models.openai.like import OpenAILike
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.openai.like import OpenAILike
->>>>>>> origin/main:libs/agno/agno/models/dashscope/dashscope.py
-
 
 @dataclass
 class DashScope(OpenAILike):

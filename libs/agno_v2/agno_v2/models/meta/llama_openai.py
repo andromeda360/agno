@@ -7,17 +7,9 @@ try:
 except ImportError:
     raise ImportError("`openai` not installed. Please install using `pip install openai`")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/meta/llama_openai.py
 from agno_v2.models.meta.llama import Message
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.utils.models.llama import format_message
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.meta.llama import Message
-from agno.models.openai.like import OpenAILike
-from agno.utils.models.llama import format_message
->>>>>>> origin/main:libs/agno/agno/models/meta/llama_openai.py
-
 
 @dataclass
 class LlamaOpenAI(OpenAILike):

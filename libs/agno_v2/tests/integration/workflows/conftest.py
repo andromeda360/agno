@@ -4,7 +4,6 @@ from typing import List
 
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/workflows/conftest.py
 from agno_v2.agent.agent import Agent
 from agno_v2.db.json import JsonDb
 from agno_v2.models.openai import OpenAIChat
@@ -13,18 +12,6 @@ from agno_v2.workflow import Condition, Loop, Parallel, Router
 from agno_v2.workflow.step import Step
 from agno_v2.workflow.types import StepInput, StepOutput
 from agno_v2.workflow.workflow import Workflow
-=======
-from agno.agent.agent import Agent
-from agno.db.json import JsonDb
-from agno.db.sqlite.async_sqlite import AsyncSqliteDb
-from agno.models.openai import OpenAIChat
-from agno.team.team import Team
-from agno.workflow import Condition, Loop, Parallel, Router
-from agno.workflow.step import Step
-from agno.workflow.types import StepInput, StepOutput
-from agno.workflow.workflow import Workflow
->>>>>>> origin/main:libs/agno/tests/integration/workflows/conftest.py
-
 
 @pytest.fixture
 def test_agent():

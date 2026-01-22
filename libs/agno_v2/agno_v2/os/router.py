@@ -17,24 +17,12 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from packaging import version
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/os/router.py
 from agno_v2.agent.agent import Agent
 from agno_v2.exceptions import InputCheckError, OutputCheckError
 from agno_v2.media import Audio, Image, Video
 from agno_v2.media import File as FileMedia
 from agno_v2.os.auth import get_authentication_dependency, validate_websocket_token
-from agno_v2.os.schema import (
-=======
-from agno.agent.agent import Agent
-from agno.db.base import AsyncBaseDb
-from agno.db.migrations.manager import MigrationManager
-from agno.exceptions import InputCheckError, OutputCheckError
-from agno.media import Audio, Image, Video
-from agno.media import File as FileMedia
-from agno.os.auth import get_authentication_dependency, validate_websocket_token
-from agno.os.schema import (
->>>>>>> origin/main:libs/agno/agno/os/router.py
-    AgentResponse,
+from agno_v2.os.schema import (    AgentResponse,
     AgentSummaryResponse,
     BadRequestResponse,
     ConfigResponse,
@@ -122,7 +110,7 @@ async def _get_request_kwargs(request: Request, endpoint_func: Callable) -> Dict
                 knowledge_filters_dict = json.loads(knowledge_filters)  # type: ignore
 
                 # Try to deserialize FilterExpr objects
-                from agno.filters import from_dict
+                from agno_v2.filters import from_dict
 
                 # Check if it's a single FilterExpr dict or a list of FilterExpr dicts
                 if isinstance(knowledge_filters_dict, dict) and "op" in knowledge_filters_dict:
@@ -153,7 +141,7 @@ async def _get_request_kwargs(request: Request, endpoint_func: Callable) -> Dict
     if output_schema := kwargs.get("output_schema"):
         try:
             if isinstance(output_schema, str):
-                from agno.os.utils import json_schema_to_pydantic_model
+                from agno_v2.os.utils import json_schema_to_pydantic_model
 
                 schema_dict = json.loads(output_schema)
                 dynamic_model = json_schema_to_pydantic_model(schema_dict)

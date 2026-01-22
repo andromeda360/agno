@@ -4,28 +4,13 @@ from datetime import date, datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/singlestore/singlestore.py
 from agno_v2.db.base import BaseDb, SessionType
 from agno_v2.db.schemas.culture import CulturalKnowledge
 from agno_v2.db.schemas.evals import EvalFilterType, EvalRunRecord, EvalType
 from agno_v2.db.schemas.knowledge import KnowledgeRow
 from agno_v2.db.schemas.memory import UserMemory
 from agno_v2.db.singlestore.schemas import get_table_schema_definition
-from agno_v2.db.singlestore.utils import (
-=======
-if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
-
-from agno.db.base import BaseDb, SessionType
-from agno.db.migrations.manager import MigrationManager
-from agno.db.schemas.culture import CulturalKnowledge
-from agno.db.schemas.evals import EvalFilterType, EvalRunRecord, EvalType
-from agno.db.schemas.knowledge import KnowledgeRow
-from agno.db.schemas.memory import UserMemory
-from agno.db.singlestore.schemas import get_table_schema_definition
-from agno.db.singlestore.utils import (
->>>>>>> origin/main:libs/agno/agno/db/singlestore/singlestore.py
-    apply_sorting,
+from agno_v2.db.singlestore.utils import (    apply_sorting,
     bulk_upsert_metrics,
     calculate_date_metrics,
     create_schema,
@@ -2511,7 +2496,7 @@ class SingleStoreDb(BaseDb):
             For other filters, the most recent trace is returned.
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             table = self._get_table(table_type="traces")
             if table is None:
@@ -2577,7 +2562,7 @@ class SingleStoreDb(BaseDb):
             tuple[List[Trace], int]: Tuple of (list of matching traces, total count).
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             log_debug(
                 f"get_traces called with filters: run_id={run_id}, session_id={session_id}, user_id={user_id}, agent_id={agent_id}, page={page}, limit={limit}"
@@ -2809,7 +2794,7 @@ class SingleStoreDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table = self._get_table(table_type="spans")
             if table is None:
@@ -2843,7 +2828,7 @@ class SingleStoreDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table = self._get_table(table_type="spans")
             if table is None:

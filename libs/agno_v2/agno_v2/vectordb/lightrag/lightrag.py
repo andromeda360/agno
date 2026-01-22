@@ -3,17 +3,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/lightrag/lightrag.py
 from agno_v2.knowledge.document import Document
 from agno_v2.utils.log import log_debug, log_error, log_info, log_warning
 from agno_v2.vectordb.base import VectorDb
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.utils.log import log_debug, log_error, log_info, log_warning
-from agno.vectordb.base import VectorDb
->>>>>>> origin/main:libs/agno/agno/vectordb/lightrag/lightrag.py
-
 DEFAULT_SERVER_URL = "http://localhost:9621"
 
 

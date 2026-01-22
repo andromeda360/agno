@@ -12,7 +12,6 @@ try:
 except ImportError:
     raise ImportError("`redis` and `redisvl` not installed. Please install using `pip install redis redisvl`")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/redis/redisdb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.utils.log import log_debug, log_info, logger
@@ -20,17 +19,6 @@ from agno_v2.utils.string import hash_string_sha256
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.search import SearchType
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.utils.log import log_debug, log_error, log_info, log_warning
-from agno.utils.string import hash_string_sha256
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
-from agno.vectordb.search import SearchType
->>>>>>> origin/main:libs/agno/agno/vectordb/redis/redisdb.py
-
 
 class RedisDB(VectorDb):
     """

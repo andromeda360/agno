@@ -84,7 +84,7 @@ def build_logger(logger_name: str, source_type: Optional[str] = None) -> Any:
     rich_handler = ColoredRichHandler(
         show_time=False,
         rich_tracebacks=False,
-        show_path=True if getenv("AGNO_V2_API_RUNTIME") == "dev" else False,
+        show_path=True if getenv("AGNO_V2_V2_API_RUNTIME") == "dev" else False,
         tracebacks_show_locals=False,
         source_type=source_type or "agent",
     )

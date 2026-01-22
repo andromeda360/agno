@@ -24,7 +24,6 @@ try:
 except ImportError:
     raise ImportError("`pgvector` not installed. Please install using `pip install pgvector`")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/pgvector/pgvector.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
@@ -33,18 +32,6 @@ from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.pgvector.index import HNSW, Ivfflat
 from agno_v2.vectordb.search import SearchType
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.knowledge.reranker.base import Reranker
-from agno.utils.log import log_debug, log_info, logger
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
-from agno.vectordb.pgvector.index import HNSW, Ivfflat
-from agno.vectordb.search import SearchType
->>>>>>> origin/main:libs/agno/agno/vectordb/pgvector/pgvector.py
-
 
 class PgVector(VectorDb):
     """

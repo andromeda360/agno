@@ -13,8 +13,8 @@ Required scopes:
 import json
 from typing import Any, List, Optional
 
-from agno.tools import Toolkit
-from agno.utils.log import log_debug
+from agno_v2.tools import Toolkit
+from agno_v2.utils.log import log_debug
 
 try:
     import httpx

@@ -6,30 +6,13 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Type, Union
 
 from pydantic import BaseModel, Field
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/memory/manager.py
 from agno_v2.db.base import AsyncBaseDb, BaseDb
 from agno_v2.db.schemas import UserMemory
 from agno_v2.models.base import Model
 from agno_v2.models.message import Message
 from agno_v2.models.utils import get_model
 from agno_v2.tools.function import Function
-from agno_v2.utils.log import (
-=======
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.db.schemas import UserMemory
-from agno.memory.strategies import MemoryOptimizationStrategy
-from agno.memory.strategies.types import (
-    MemoryOptimizationStrategyFactory,
-    MemoryOptimizationStrategyType,
-)
-from agno.models.base import Model
-from agno.models.message import Message
-from agno.models.utils import get_model
-from agno.tools.function import Function
-from agno.utils.dttm import now_epoch_s
-from agno.utils.log import (
->>>>>>> origin/main:libs/agno/agno/memory/manager.py
-    log_debug,
+from agno_v2.utils.log import (    log_debug,
     log_error,
     log_warning,
     set_log_level_to_debug,
@@ -159,7 +142,7 @@ class MemoryManager:
         return None
 
     def set_log_level(self):
-        if self.debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
+        if self.debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
             self.debug_mode = True
             set_log_level_to_debug()
         else:

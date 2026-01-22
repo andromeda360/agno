@@ -4,23 +4,12 @@ from typing import Any, Dict, List, Optional, Union
 
 from bson import ObjectId
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/mongodb/mongodb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.utils.log import log_debug, log_info, log_warning, logger
 from agno_v2.vectordb.base import VectorDb
 from agno_v2.vectordb.distance import Distance
 from agno_v2.vectordb.search import SearchType
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.utils.log import log_debug, log_info, log_warning, logger
-from agno.vectordb.base import VectorDb
-from agno.vectordb.distance import Distance
-from agno.vectordb.search import SearchType
->>>>>>> origin/main:libs/agno/agno/vectordb/mongodb/mongodb.py
-
 try:
     from hashlib import md5
 

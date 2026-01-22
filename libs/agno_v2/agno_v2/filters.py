@@ -9,7 +9,7 @@ Filter Types:
     - Logical: AND, OR, NOT
 
 Example:
-    >>> from agno.filters import EQ, GT, IN, AND, OR, NOT
+    >>> from agno_v2.filters import EQ, GT, IN, AND, OR, NOT
     >>>
     >>> # Simple equality filter
     >>> filter = EQ("category", "technology")

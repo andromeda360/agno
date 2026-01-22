@@ -20,15 +20,8 @@ from couchbase.options import ClusterOptions
 from couchbase.result import GetResult, MultiMutationResult
 from couchbase.scope import Scope
 
-<<<<<<< HEAD:libs/agno_v2/tests/unit/vectordb/test_couchbase.py
 from agno_v2.knowledge.document import Document
 from agno_v2.vectordb.couchbase.couchbase import CouchbaseSearch, OpenAIEmbedder
-=======
-from agno.knowledge.document import Document
-from agno.knowledge.embedder.openai import OpenAIEmbedder
-from agno.vectordb.couchbase.couchbase import CouchbaseSearch
->>>>>>> origin/main:libs/agno/tests/unit/vectordb/test_couchbase.py
-
 
 @pytest.fixture
 def mock_async_cluster():

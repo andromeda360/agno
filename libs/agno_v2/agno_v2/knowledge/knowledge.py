@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast, overload
 
 from httpx import AsyncClient
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/knowledge.py
 from agno_v2.db.base import AsyncBaseDb, BaseDb
 from agno_v2.db.schemas.knowledge import KnowledgeRow
 from agno_v2.knowledge.content import Content, ContentAuth, ContentStatus, FileData
@@ -21,19 +20,6 @@ from agno_v2.knowledge.remote_content.remote_content import GCSContent, RemoteCo
 from agno_v2.utils.http import async_fetch_with_retry
 from agno_v2.utils.log import log_debug, log_error, log_info, log_warning
 from agno_v2.utils.string import generate_id
-=======
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.db.schemas.knowledge import KnowledgeRow
-from agno.filters import FilterExpr
-from agno.knowledge.content import Content, ContentAuth, ContentStatus, FileData
-from agno.knowledge.document import Document
-from agno.knowledge.reader import Reader, ReaderFactory
-from agno.knowledge.remote_content.remote_content import GCSContent, RemoteContent, S3Content
-from agno.utils.http import async_fetch_with_retry
-from agno.utils.log import log_debug, log_error, log_info, log_warning
-from agno.utils.string import generate_id
->>>>>>> origin/main:libs/agno/agno/knowledge/knowledge.py
-
 ContentDict = Dict[str, Union[str, Dict[str, str]]]
 
 
@@ -1514,7 +1500,7 @@ class Knowledge:
                         f"Invalid filter at index {i}: expected FilterExpr instance, "
                         f"got {type(filter_item).__name__}. "
                         f"Use filter expressions like EQ('key', 'value'), IN('key', [values]), "
-                        f"AND(...), OR(...), NOT(...) from agno.filters"
+                        f"AND(...), OR(...), NOT(...) from agno_v2.filters"
                     )
             # Filter expressions are already validated, return empty dict/list
             # The actual filtering happens in the vector_db layer

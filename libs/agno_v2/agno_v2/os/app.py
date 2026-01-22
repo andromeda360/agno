@@ -938,7 +938,7 @@ class AgentOS:
     ):
         import uvicorn
 
-        if getenv("AGNO_V2_API_RUNTIME", "").lower() == "stg":
+        if getenv("AGNO_V2_V2_API_RUNTIME", "").lower() == "stg":
             public_endpoint = "https://os-stg.agno.com/"
         else:
             public_endpoint = "https://os.agno.com/"

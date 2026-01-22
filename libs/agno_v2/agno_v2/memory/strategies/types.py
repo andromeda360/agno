@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-from agno.memory.strategies import MemoryOptimizationStrategy
+from agno_v2.memory.strategies import MemoryOptimizationStrategy
 
 
 class MemoryOptimizationStrategyType(str, Enum):
@@ -32,6 +32,6 @@ class MemoryOptimizationStrategyFactory:
 
     @classmethod
     def _create_summarize_strategy(cls, **kwargs) -> MemoryOptimizationStrategy:
-        from agno.memory.strategies.summarize import SummarizeStrategy
+        from agno_v2.memory.strategies.summarize import SummarizeStrategy
 
         return SummarizeStrategy(**kwargs)

@@ -4,7 +4,6 @@ from os import getenv
 from typing import Any, Dict, List, Optional, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/tools/models_labs.py
 from agno_v2.agent import Agent
 from agno_v2.media import Audio, Image, Video
 from agno_v2.models.response import FileType
@@ -12,14 +11,6 @@ from agno_v2.team import Team
 from agno_v2.tools import Toolkit
 from agno_v2.tools.function import ToolResult
 from agno_v2.utils.log import log_debug, log_info, logger
-=======
-from agno.media import Audio, Image, Video
-from agno.models.response import FileType
-from agno.tools import Toolkit
-from agno.tools.function import ToolResult
-from agno.utils.log import log_debug, log_info, logger
->>>>>>> origin/main:libs/agno/agno/tools/models_labs.py
-
 try:
     import requests
     from requests.exceptions import RequestException

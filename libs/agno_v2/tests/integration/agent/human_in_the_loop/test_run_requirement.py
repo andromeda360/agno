@@ -2,9 +2,9 @@
 
 import pytest
 
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.tools.decorator import tool
+from agno_v2.agent import Agent
+from agno_v2.models.openai import OpenAIChat
+from agno_v2.tools.decorator import tool
 
 
 def test_run_requirement_needs_confirmation_flag(shared_db):

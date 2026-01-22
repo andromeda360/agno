@@ -4,8 +4,8 @@ from typing import Optional, Union
 from packaging import version as packaging_version
 from packaging.version import Version
 
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.utils.log import log_error, log_info, log_warning
+from agno_v2.db.base import AsyncBaseDb, BaseDb
+from agno_v2.utils.log import log_error, log_info, log_warning
 
 
 class MigrationManager:

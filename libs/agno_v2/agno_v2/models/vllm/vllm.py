@@ -4,15 +4,8 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/vllm/vllm.py
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.utils.log import log_debug
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.openai.like import OpenAILike
-from agno.utils.log import log_debug
->>>>>>> origin/main:libs/agno/agno/models/vllm/vllm.py
-
 
 @dataclass
 class VLLM(OpenAILike):

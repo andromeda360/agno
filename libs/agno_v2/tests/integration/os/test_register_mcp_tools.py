@@ -1,19 +1,9 @@
-<<<<<<< HEAD:libs/agno_v2/tests/integration/os/test_register_mcp_tools.py
 from agno_v2.agent import Agent
 from agno_v2.os import AgentOS
 from agno_v2.team.team import Team
 from agno_v2.tools.mcp import MCPTools
 from agno_v2.workflow.step import Step
 from agno_v2.workflow.workflow import Workflow
-=======
-from agno.agent import Agent
-from agno.os import AgentOS
-from agno.team.team import Team
-from agno.tools.mcp import MCPTools, MultiMCPTools
-from agno.workflow.step import Step
-from agno.workflow.workflow import Workflow
->>>>>>> origin/main:libs/agno/tests/integration/os/test_register_mcp_tools.py
-
 
 def test_agent_mcp_tools_are_registered():
     """Test that agent MCP tools are registered"""

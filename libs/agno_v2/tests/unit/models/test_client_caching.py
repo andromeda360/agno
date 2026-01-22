@@ -15,9 +15,9 @@ import pytest
 # Set test API key to avoid env var lookup errors
 os.environ.setdefault("OPENAI_API_KEY", "test-key-for-testing")
 
-from agno.models.openai.chat import OpenAIChat
-from agno.models.openai.responses import OpenAIResponses
-from agno.utils.http import (
+from agno_v2.models.openai.chat import OpenAIChat
+from agno_v2.models.openai.responses import OpenAIResponses
+from agno_v2.utils.http import (
     aclose_default_clients,
     close_sync_client,
     get_default_async_client,

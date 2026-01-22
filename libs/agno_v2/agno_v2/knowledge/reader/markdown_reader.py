@@ -3,20 +3,11 @@ import uuid
 from pathlib import Path
 from typing import IO, Any, List, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/markdown_reader.py
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.reader.base import Reader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import log_info, logger
-=======
-from agno.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
-from agno.knowledge.document.base import Document
-from agno.knowledge.reader.base import Reader
-from agno.knowledge.types import ContentType
-from agno.utils.log import log_debug, log_error, log_warning
->>>>>>> origin/main:libs/agno/agno/knowledge/reader/markdown_reader.py
-
 DEFAULT_CHUNKER_STRATEGY: ChunkingStrategy
 
 # Try to import MarkdownChunking, fallback to FixedSizeChunking if not available

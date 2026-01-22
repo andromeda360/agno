@@ -79,7 +79,7 @@ def set_default_sync_client(client: httpx.Client) -> None:
 
     Example:
         >>> import httpx
-        >>> from agno.utils.http import set_default_sync_client
+        >>> from agno_v2.utils.http import set_default_sync_client
         >>> custom_client = httpx.Client(
         ...     limits=httpx.Limits(max_connections=500),
         ...     timeout=httpx.Timeout(30.0),
@@ -106,7 +106,7 @@ def set_default_async_client(client: httpx.AsyncClient) -> None:
 
     Example:
         >>> import httpx
-        >>> from agno.utils.http import set_default_async_client
+        >>> from agno_v2.utils.http import set_default_async_client
         >>> custom_client = httpx.AsyncClient(
         ...     limits=httpx.Limits(max_connections=500),
         ...     timeout=httpx.Timeout(30.0),

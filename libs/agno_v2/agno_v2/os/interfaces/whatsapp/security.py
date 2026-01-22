@@ -3,7 +3,7 @@ import hmac
 import os
 from typing import Optional
 
-from agno.utils.log import log_warning
+from agno_v2.utils.log import log_warning
 
 
 def is_development_mode() -> bool:

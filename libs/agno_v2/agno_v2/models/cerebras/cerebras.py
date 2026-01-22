@@ -7,23 +7,12 @@ from typing import Any, Dict, Iterator, List, Optional, Type, Union
 import httpx
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/cerebras/cerebras.py
 from agno_v2.models.base import Model
 from agno_v2.models.message import Message
 from agno_v2.models.metrics import Metrics
 from agno_v2.models.response import ModelResponse
 from agno_v2.run.agent import RunOutput
 from agno_v2.utils.log import log_debug, log_error, log_warning
-=======
-from agno.models.base import Model
-from agno.models.message import Message
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse
-from agno.run.agent import RunOutput
-from agno.utils.http import get_default_async_client, get_default_sync_client
-from agno.utils.log import log_debug, log_error, log_warning
->>>>>>> origin/main:libs/agno/agno/models/cerebras/cerebras.py
-
 try:
     from cerebras.cloud.sdk import AsyncCerebras as AsyncCerebrasClient
     from cerebras.cloud.sdk import Cerebras as CerebrasClient

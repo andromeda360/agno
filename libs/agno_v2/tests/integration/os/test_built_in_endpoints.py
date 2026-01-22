@@ -1,19 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/os/test_built_in_endpoints.py
 from agno_v2.agent.agent import Agent
 from agno_v2.os import AgentOS
 from agno_v2.team.team import Team
 from agno_v2.workflow.workflow import Workflow
-=======
-from agno.agent.agent import Agent
-from agno.db.sqlite import SqliteDb
-from agno.os import AgentOS
-from agno.team.team import Team
-from agno.workflow.workflow import Workflow
->>>>>>> origin/main:libs/agno/tests/integration/os/test_built_in_endpoints.py
-
 
 @pytest.fixture
 def test_agent():

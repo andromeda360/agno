@@ -3,16 +3,10 @@
 import json
 from unittest.mock import AsyncMock, patch
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/os/test_agent_runs.py
 from agno_v2.agent.agent import Agent
 from agno_v2.models.openai import OpenAIChat
 from agno_v2.os import AgentOS
 from agno_v2.run import RunContext
-=======
-from agno.agent.agent import Agent
-from agno.run import RunContext
->>>>>>> origin/main:libs/agno/tests/integration/os/test_agent_runs.py
-
 
 def test_create_agent_run(test_os_client, test_agent: Agent):
     """Test creating an agent run using form input."""

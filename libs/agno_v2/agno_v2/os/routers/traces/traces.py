@@ -4,15 +4,15 @@ from typing import Optional, Union
 from fastapi import Depends, HTTPException, Query
 from fastapi.routing import APIRouter
 
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.os.auth import get_authentication_dependency
-from agno.os.routers.traces.schemas import (
+from agno_v2.db.base import AsyncBaseDb, BaseDb
+from agno_v2.os.auth import get_authentication_dependency
+from agno_v2.os.routers.traces.schemas import (
     TraceDetail,
     TraceNode,
     TraceSessionStats,
     TraceSummary,
 )
-from agno.os.schema import (
+from agno_v2.os.schema import (
     BadRequestResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
@@ -21,9 +21,9 @@ from agno.os.schema import (
     UnauthenticatedResponse,
     ValidationErrorResponse,
 )
-from agno.os.settings import AgnoAPISettings
-from agno.os.utils import get_db, parse_datetime_to_utc
-from agno.utils.log import log_error
+from agno_v2.os.settings import AgnoAPISettings
+from agno_v2.os.utils import get_db, parse_datetime_to_utc
+from agno_v2.utils.log import log_error
 
 logger = logging.getLogger(__name__)
 

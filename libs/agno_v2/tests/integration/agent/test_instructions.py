@@ -1,7 +1,7 @@
 import pytest
 
-from agno.agent import Agent
-from agno.team import Team
+from agno_v2.agent import Agent
+from agno_v2.team import Team
 
 
 def test_callable_instructions():

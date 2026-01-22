@@ -11,8 +11,8 @@ from typing import Optional
 
 import pytest
 
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
+from agno_v2.agent import Agent
+from agno_v2.models.openai import OpenAIChat
 
 
 # Define an async knowledge retriever function

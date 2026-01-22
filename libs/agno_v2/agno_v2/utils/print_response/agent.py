@@ -11,7 +11,6 @@ from rich.markdown import Markdown
 from rich.status import Status
 from rich.text import Text
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/utils/print_response/agent.py
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Message
 from agno_v2.reasoning.step import ReasoningStep
@@ -20,18 +19,6 @@ from agno_v2.utils.log import log_warning
 from agno_v2.utils.message import get_text_from_message
 from agno_v2.utils.response import create_panel, create_paused_run_output_panel, escape_markdown_tags, format_tool_calls
 from agno_v2.utils.timer import Timer
-=======
-from agno.filters import FilterExpr
-from agno.media import Audio, File, Image, Video
-from agno.models.message import Message
-from agno.reasoning.step import ReasoningStep
-from agno.run.agent import RunEvent, RunOutput, RunOutputEvent, RunPausedEvent
-from agno.utils.log import log_warning
-from agno.utils.message import get_text_from_message
-from agno.utils.response import create_panel, create_paused_run_output_panel, escape_markdown_tags, format_tool_calls
-from agno.utils.timer import Timer
->>>>>>> origin/main:libs/agno/agno/utils/print_response/agent.py
-
 if TYPE_CHECKING:
     from agno_v2.agent.agent import Agent
 

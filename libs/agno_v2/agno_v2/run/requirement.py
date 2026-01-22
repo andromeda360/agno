@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 from uuid import uuid4
 
-from agno.models.response import ToolExecution, UserInputField
+from agno_v2.models.response import ToolExecution, UserInputField
 
 if TYPE_CHECKING:
     pass

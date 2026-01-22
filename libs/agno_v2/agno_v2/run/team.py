@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/run/team.py
 from agno_v2.media import Audio, File, Image, Video
 from agno_v2.models.message import Citations, Message
 from agno_v2.models.metrics import Metrics
@@ -14,20 +13,7 @@ from agno_v2.reasoning.step import ReasoningStep
 from agno_v2.run.agent import RunEvent, RunOutput, RunOutputEvent, run_output_event_from_dict
 from agno_v2.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
 from agno_v2.utils.log import log_error
-from agno_v2.utils.media import (
-=======
-from agno.media import Audio, File, Image, Video
-from agno.models.message import Citations, Message
-from agno.models.metrics import Metrics
-from agno.models.response import ToolExecution
-from agno.reasoning.step import ReasoningStep
-from agno.run.agent import RunEvent, RunOutput, RunOutputEvent, run_output_event_from_dict
-from agno.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
-from agno.run.requirement import RunRequirement
-from agno.utils.log import log_error
-from agno.utils.media import (
->>>>>>> origin/main:libs/agno/agno/run/team.py
-    reconstruct_audio_list,
+from agno_v2.utils.media import (    reconstruct_audio_list,
     reconstruct_files,
     reconstruct_images,
     reconstruct_response_audio,

@@ -4,9 +4,9 @@ Setup helper functions for configuring Agno tracing.
 
 from typing import Union
 
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.tracing.exporter import DatabaseSpanExporter
-from agno.utils.log import logger
+from agno_v2.db.base import AsyncBaseDb, BaseDb
+from agno_v2.tracing.exporter import DatabaseSpanExporter
+from agno_v2.utils.log import logger
 
 try:
     from openinference.instrumentation.agno import AgnoInstrumentor  # type: ignore
@@ -50,8 +50,8 @@ def setup_tracing(
 
     Example:
         ```python
-        from agno.db.sqlite import SqliteDb
-        from agno.tracing import setup_tracing
+        from agno_v2.db.sqlite import SqliteDb
+        from agno_v2.tracing import setup_tracing
 
         db = SqliteDb(db_file="tmp/traces.db")
         setup_tracing(db=db)

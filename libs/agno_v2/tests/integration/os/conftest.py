@@ -1,12 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from agno.agent.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.os import AgentOS
-from agno.team.team import Team
-from agno.workflow.step import Step
-from agno.workflow.workflow import Workflow
+from agno_v2.agent.agent import Agent
+from agno_v2.models.openai import OpenAIChat
+from agno_v2.os import AgentOS
+from agno_v2.team.team import Team
+from agno_v2.workflow.step import Step
+from agno_v2.workflow.workflow import Workflow
 
 
 @pytest.fixture

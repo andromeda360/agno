@@ -4,19 +4,10 @@ from datetime import datetime
 
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/managers/test_memory_manager.py
 from agno_v2.db.sqlite import SqliteDb
 from agno_v2.memory import MemoryManager, UserMemory
 from agno_v2.models.message import Message
 from agno_v2.models.openai import OpenAIChat
-=======
-from agno.db.sqlite import SqliteDb
-from agno.memory import MemoryManager, UserMemory
-from agno.memory.strategies.types import MemoryOptimizationStrategyType
-from agno.models.message import Message
-from agno.models.openai import OpenAIChat
->>>>>>> origin/main:libs/agno/tests/integration/managers/test_memory_manager.py
-
 
 @pytest.fixture
 def temp_db_file():

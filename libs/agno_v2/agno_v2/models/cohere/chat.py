@@ -5,7 +5,6 @@ from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Tuple, Ty
 import httpx
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/cohere/chat.py
 from agno_v2.exceptions import ModelProviderError
 from agno_v2.models.base import Model
 from agno_v2.models.message import Message
@@ -14,18 +13,6 @@ from agno_v2.models.response import ModelResponse
 from agno_v2.run.agent import RunOutput
 from agno_v2.utils.log import log_debug, log_error
 from agno_v2.utils.models.cohere import format_messages
-=======
-from agno.exceptions import ModelProviderError
-from agno.models.base import Model
-from agno.models.message import Message
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse
-from agno.run.agent import RunOutput
-from agno.utils.http import get_default_async_client, get_default_sync_client
-from agno.utils.log import log_debug, log_error, log_warning
-from agno.utils.models.cohere import format_messages
->>>>>>> origin/main:libs/agno/agno/models/cohere/chat.py
-
 try:
     from cohere import AsyncClientV2 as CohereAsyncClient
     from cohere import ClientV2 as CohereClient

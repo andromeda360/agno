@@ -2,13 +2,7 @@ from dataclasses import dataclass
 from os import getenv
 from typing import Any, Dict, Optional
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/sambanova/sambanova.py
 from agno_v2.models.openai.like import OpenAILike
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.openai.like import OpenAILike
->>>>>>> origin/main:libs/agno/agno/models/sambanova/sambanova.py
-
 
 @dataclass
 class Sambanova(OpenAILike):

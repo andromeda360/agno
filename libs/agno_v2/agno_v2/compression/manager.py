@@ -3,10 +3,10 @@ from dataclasses import dataclass, field
 from textwrap import dedent
 from typing import Any, Dict, List, Optional
 
-from agno.models.base import Model
-from agno.models.message import Message
-from agno.models.utils import get_model
-from agno.utils.log import log_error, log_info, log_warning
+from agno_v2.models.base import Model
+from agno_v2.models.message import Message
+from agno_v2.models.utils import get_model
+from agno_v2.utils.log import log_error, log_info, log_warning
 
 DEFAULT_COMPRESSION_PROMPT = dedent("""\
     You are compressing tool call results to save context space while preserving critical information.

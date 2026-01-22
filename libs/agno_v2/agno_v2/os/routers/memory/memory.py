@@ -6,19 +6,10 @@ from uuid import uuid4
 from fastapi import Depends, HTTPException, Path, Query, Request
 from fastapi.routing import APIRouter
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/os/routers/memory/memory.py
 from agno_v2.db.base import AsyncBaseDb, BaseDb
 from agno_v2.db.schemas import UserMemory
 from agno_v2.os.auth import get_authentication_dependency
-from agno_v2.os.routers.memory.schemas import (
-=======
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.db.schemas import UserMemory
-from agno.models.utils import get_model
-from agno.os.auth import get_authentication_dependency
-from agno.os.routers.memory.schemas import (
->>>>>>> origin/main:libs/agno/agno/os/routers/memory/memory.py
-    DeleteMemoriesRequest,
+from agno_v2.os.routers.memory.schemas import (    DeleteMemoriesRequest,
     OptimizeMemoriesRequest,
     OptimizeMemoriesResponse,
     UserMemoryCreateSchema,
@@ -561,8 +552,8 @@ def attach_routes(router: APIRouter, dbs: dict[str, list[Union[BaseDb, AsyncBase
         table: Optional[str] = Query(default=None, description="Table to use for optimization"),
     ) -> OptimizeMemoriesResponse:
         """Optimize user memories using the default summarize strategy."""
-        from agno.memory import MemoryManager
-        from agno.memory.strategies.types import MemoryOptimizationStrategyType
+        from agno_v2.memory import MemoryManager
+        from agno_v2.memory.strategies.types import MemoryOptimizationStrategyType
 
         try:
             # Get database instance
@@ -589,7 +580,7 @@ def attach_routes(router: APIRouter, dbs: dict[str, list[Union[BaseDb, AsyncBase
                 raise HTTPException(status_code=404, detail=f"No memories found for user {request.user_id}")
 
             # Count tokens before optimization
-            from agno.memory.strategies.summarize import SummarizeStrategy
+            from agno_v2.memory.strategies.summarize import SummarizeStrategy
 
             strategy = SummarizeStrategy()
             tokens_before = strategy.count_tokens(memories_before)

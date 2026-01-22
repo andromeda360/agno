@@ -3,17 +3,9 @@ from unittest.mock import patch
 
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/unit/utils/test_team.py
 from agno_v2.agent.agent import Agent
 from agno_v2.team.team import Team
 from agno_v2.utils.team import get_member_id
-=======
-from agno.agent.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.team.team import Team
-from agno.utils.team import get_member_id
->>>>>>> origin/main:libs/agno/tests/unit/utils/test_team.py
-
 
 @pytest.fixture
 def team_show_member_responses_true():

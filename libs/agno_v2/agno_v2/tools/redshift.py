@@ -8,8 +8,8 @@ try:
 except ImportError:
     raise ImportError("`redshift_connector` not installed. Please install using `pip install redshift-connector`.")
 
-from agno.tools import Toolkit
-from agno.utils.log import log_debug, log_error, log_info
+from agno_v2.tools import Toolkit
+from agno_v2.utils.log import log_debug, log_error, log_info
 
 
 class RedshiftTools(Toolkit):

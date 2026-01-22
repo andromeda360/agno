@@ -5,7 +5,7 @@ from os import getenv
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
+    from agno_v2.tracing.schemas import Span, Trace
 
 from agno_v2.db.base import BaseDb, SessionType
 from agno_v2.db.dynamo.schemas import get_table_schema_definition
@@ -2204,7 +2204,7 @@ class DynamoDb(BaseDb):
             For other filters, the most recent trace is returned.
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             table_name = self._get_table("traces")
             if table_name is None:
@@ -2284,7 +2284,7 @@ class DynamoDb(BaseDb):
             tuple[List[Trace], int]: Tuple of (list of matching traces, total count).
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             table_name = self._get_table("traces")
             if table_name is None:
@@ -2664,7 +2664,7 @@ class DynamoDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table_name = self._get_table("spans")
             if table_name is None:
@@ -2705,7 +2705,7 @@ class DynamoDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             table_name = self._get_table("spans")
             if table_name is None:

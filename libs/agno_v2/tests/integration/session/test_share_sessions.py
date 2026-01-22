@@ -2,22 +2,11 @@ import uuid
 
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/session/test_share_sessions.py
 from agno_v2.agent.agent import Agent
 from agno_v2.models.openai import OpenAIChat
 from agno_v2.session.agent import AgentSession
 from agno_v2.session.team import TeamSession
 from agno_v2.team.team import Team
-=======
-from agno.agent.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.run.agent import RunOutput
-from agno.run.team import TeamRunOutput
-from agno.session.agent import AgentSession
-from agno.session.team import TeamSession
-from agno.team.team import Team
->>>>>>> origin/main:libs/agno/tests/integration/session/test_share_sessions.py
-
 
 @pytest.fixture
 def agent_1(shared_db):

@@ -5,28 +5,11 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/os/schema.py
 from agno_v2.agent import Agent
 from agno_v2.db.base import SessionType
 from agno_v2.models.message import Message
 from agno_v2.os.config import ChatConfig, EvalsConfig, KnowledgeConfig, MemoryConfig, MetricsConfig, SessionConfig
-from agno_v2.os.utils import (
-=======
-from agno.agent import Agent
-from agno.db.base import SessionType
-from agno.models.message import Message
-from agno.os.config import (
-    ChatConfig,
-    EvalsConfig,
-    KnowledgeConfig,
-    MemoryConfig,
-    MetricsConfig,
-    SessionConfig,
-    TracesConfig,
-)
-from agno.os.utils import (
->>>>>>> origin/main:libs/agno/agno/os/schema.py
-    extract_input_media,
+from agno_v2.os.utils import (    extract_input_media,
     format_team_tools,
     format_tools,
     get_agent_input_schema_dict,
@@ -35,7 +18,6 @@ from agno.os.utils import (
     get_team_input_schema_dict,
     get_workflow_input_schema_dict,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/os/schema.py
 from agno_v2.run import RunContext
 from agno_v2.run.agent import RunOutput
 from agno_v2.run.team import TeamRunOutput
@@ -43,17 +25,6 @@ from agno_v2.session import AgentSession, TeamSession, WorkflowSession
 from agno_v2.team.team import Team
 from agno_v2.workflow.agent import WorkflowAgent
 from agno_v2.workflow.workflow import Workflow
-=======
-from agno.run import RunContext
-from agno.run.agent import RunOutput
-from agno.run.team import TeamRunOutput
-from agno.session import AgentSession, TeamSession, WorkflowSession
-from agno.team.team import Team
-from agno.utils.agent import aexecute_instructions, aexecute_system_message
-from agno.workflow.agent import WorkflowAgent
-from agno.workflow.workflow import Workflow
->>>>>>> origin/main:libs/agno/agno/os/schema.py
-
 
 class BadRequestResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": {"detail": "Bad request", "error_code": "BAD_REQUEST"}})

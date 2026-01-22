@@ -758,7 +758,7 @@ def json_schema_to_pydantic_model(schema: Dict[str, Any]) -> Type[BaseModel]:
 def setup_tracing_for_os(db: Union[BaseDb, AsyncBaseDb]) -> None:
     """Set up OpenTelemetry tracing for this agent/team/workflow."""
     try:
-        from agno.tracing import setup_tracing
+        from agno_v2.tracing import setup_tracing
 
         setup_tracing(db=db)
     except ImportError:

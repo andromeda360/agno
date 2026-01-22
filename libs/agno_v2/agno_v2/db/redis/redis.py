@@ -3,17 +3,8 @@ from datetime import date, datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/redis/redis.py
 from agno_v2.db.base import BaseDb, SessionType
-from agno_v2.db.redis.utils import (
-=======
-if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
-
-from agno.db.base import BaseDb, SessionType
-from agno.db.redis.utils import (
->>>>>>> origin/main:libs/agno/agno/db/redis/redis.py
-    apply_filters,
+from agno_v2.db.redis.utils import (    apply_filters,
     apply_pagination,
     apply_sorting,
     calculate_date_metrics,
@@ -1816,7 +1807,7 @@ class RedisDb(BaseDb):
             For other filters, the most recent trace is returned.
         """
         try:
-            from agno.tracing.schemas import Trace as TraceSchema
+            from agno_v2.tracing.schemas import Trace as TraceSchema
 
             if trace_id:
                 result = self._get_record("traces", trace_id)
@@ -1885,7 +1876,7 @@ class RedisDb(BaseDb):
             tuple[List[Trace], int]: Tuple of (list of matching traces, total count).
         """
         try:
-            from agno.tracing.schemas import Trace as TraceSchema
+            from agno_v2.tracing.schemas import Trace as TraceSchema
 
             log_debug(
                 f"get_traces called with filters: run_id={run_id}, session_id={session_id}, "
@@ -2098,7 +2089,7 @@ class RedisDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span as SpanSchema
+            from agno_v2.tracing.schemas import Span as SpanSchema
 
             result = self._get_record("spans", span_id)
             if result:
@@ -2126,7 +2117,7 @@ class RedisDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span as SpanSchema
+            from agno_v2.tracing.schemas import Span as SpanSchema
 
             all_spans = self._get_all_records("spans")
 

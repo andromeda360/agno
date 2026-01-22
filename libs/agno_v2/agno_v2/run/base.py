@@ -4,21 +4,11 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/run/base.py
 from agno_v2.media import Audio, Image, Video
 from agno_v2.models.message import Citations, Message, MessageReferences
 from agno_v2.models.metrics import Metrics
 from agno_v2.reasoning.step import ReasoningStep
 from agno_v2.utils.log import log_error
-=======
-from agno.filters import FilterExpr
-from agno.media import Audio, Image, Video
-from agno.models.message import Citations, Message, MessageReferences
-from agno.models.metrics import Metrics
-from agno.reasoning.step import ReasoningStep
-from agno.utils.log import log_error
->>>>>>> origin/main:libs/agno/agno/run/base.py
-
 
 @dataclass
 class RunContext:
@@ -216,14 +206,14 @@ class BaseRunOutputEvent:
 
         run_input = data.pop("run_input", None)
         if run_input:
-            from agno.run.team import BaseTeamRunEvent
+            from agno_v2.run.team import BaseTeamRunEvent
 
             if issubclass(cls, BaseTeamRunEvent):
-                from agno.run.team import TeamRunInput
+                from agno_v2.run.team import TeamRunInput
 
                 data["run_input"] = TeamRunInput.from_dict(run_input)
             else:
-                from agno.run.agent import RunInput
+                from agno_v2.run.agent import RunInput
 
                 data["run_input"] = RunInput.from_dict(run_input)
 

@@ -7,24 +7,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/integration/agent/test_hooks.py
 from agno_v2.agent import Agent
 from agno_v2.exceptions import CheckTrigger, InputCheckError, OutputCheckError
 from agno_v2.models.base import Model
 from agno_v2.models.response import ModelResponse
 from agno_v2.run.agent import RunInput, RunOutput
 from agno_v2.session.agent import AgentSession
-=======
-from agno.agent import Agent
-from agno.exceptions import CheckTrigger, InputCheckError, OutputCheckError
-from agno.models.base import Model
-from agno.models.message import Message
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse
-from agno.run.agent import RunEvent, RunInput, RunOutput
-from agno.session.agent import AgentSession
->>>>>>> origin/main:libs/agno/tests/integration/agent/test_hooks.py
-
 
 # Test hook functions
 def simple_pre_hook(run_input: RunInput) -> None:

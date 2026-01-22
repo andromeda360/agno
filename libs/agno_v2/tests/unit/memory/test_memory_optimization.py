@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.memory.manager import MemoryManager, UserMemory
-from agno.memory.strategies import (
+from agno_v2.db.base import AsyncBaseDb, BaseDb
+from agno_v2.memory.manager import MemoryManager, UserMemory
+from agno_v2.memory.strategies import (
     MemoryOptimizationStrategy,
     MemoryOptimizationStrategyType,
 )

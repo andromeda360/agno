@@ -6,17 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/json/json_db.py
 from agno_v2.db.base import BaseDb, SessionType
-from agno_v2.db.json.utils import (
-=======
-if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
-
-from agno.db.base import BaseDb, SessionType
-from agno.db.json.utils import (
->>>>>>> origin/main:libs/agno/agno/db/json/json_db.py
-    apply_sorting,
+from agno_v2.db.json.utils import (    apply_sorting,
     calculate_date_metrics,
     deserialize_cultural_knowledge_from_db,
     fetch_all_sessions_data,
@@ -1454,7 +1445,7 @@ class JsonDb(BaseDb):
             Optional[Trace]: The trace if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             traces = self._read_json_file(self.trace_table_name, create_table_if_not_found=False)
             if not traces:
@@ -1523,7 +1514,7 @@ class JsonDb(BaseDb):
             tuple[List[Trace], int]: Tuple of (list of matching traces, total count).
         """
         try:
-            from agno.tracing.schemas import Trace
+            from agno_v2.tracing.schemas import Trace
 
             traces = self._read_json_file(self.trace_table_name, create_table_if_not_found=False)
             if not traces:
@@ -1725,7 +1716,7 @@ class JsonDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             spans = self._read_json_file(self.span_table_name, create_table_if_not_found=False)
 
@@ -1756,7 +1747,7 @@ class JsonDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span
+            from agno_v2.tracing.schemas import Span
 
             spans = self._read_json_file(self.span_table_name, create_table_if_not_found=False)
             if not spans:

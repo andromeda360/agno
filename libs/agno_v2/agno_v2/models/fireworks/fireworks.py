@@ -2,13 +2,7 @@ from dataclasses import dataclass, field
 from os import getenv
 from typing import Any, Dict, Optional
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/fireworks/fireworks.py
 from agno_v2.models.openai import OpenAILike
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.openai import OpenAILike
->>>>>>> origin/main:libs/agno/agno/models/fireworks/fireworks.py
-
 
 @dataclass
 class Fireworks(OpenAILike):

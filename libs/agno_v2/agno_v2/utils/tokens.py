@@ -27,7 +27,7 @@ def count_tokens(text: str) -> int:
         tokens = encoding.encode(text)
         return len(tokens)
     except ImportError:
-        from agno.utils.log import log_warning
+        from agno_v2.utils.log import log_warning
 
         log_warning(
             "tiktoken not installed. You can install with `pip install -U tiktoken`. Using character-based estimation."
@@ -35,7 +35,7 @@ def count_tokens(text: str) -> int:
         # Fallback: rough estimation (1 token H 4 characters)
         return len(text) // 4
     except Exception as e:
-        from agno.utils.log import log_warning
+        from agno_v2.utils.log import log_warning
 
         log_warning(f"Error counting tokens: {e}. Using character-based estimation.")
         return len(text) // 4

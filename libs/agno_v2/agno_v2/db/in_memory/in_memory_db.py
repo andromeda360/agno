@@ -21,7 +21,7 @@ from agno_v2.session import AgentSession, Session, TeamSession, WorkflowSession
 from agno_v2.utils.log import log_debug, log_error, log_info, log_warning
 
 if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
+    from agno_v2.tracing.schemas import Span, Trace
 
 
 class InMemoryDb(BaseDb):

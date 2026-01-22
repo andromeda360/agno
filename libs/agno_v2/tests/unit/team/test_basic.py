@@ -1,6 +1,5 @@
 import pytest
 
-<<<<<<< HEAD:libs/agno_v2/tests/unit/team/test_basic.py
 from agno_v2.agent import Agent
 from agno_v2.models.openai import OpenAIChat
 from agno_v2.run import RunContext
@@ -10,20 +9,6 @@ from agno_v2.team.team import Team
 from agno_v2.tools.duckduckgo import DuckDuckGoTools
 from agno_v2.tools.yfinance import YFinanceTools
 from agno_v2.utils.string import is_valid_uuid
-=======
-from agno.agent import Agent
-from agno.models.message import Message
-from agno.models.metrics import Metrics
-from agno.models.openai import OpenAIChat
-from agno.run import RunContext
-from agno.run.team import TeamRunOutput
-from agno.session.team import TeamSession
-from agno.team.team import Team
-from agno.tools.duckduckgo import DuckDuckGoTools
-from agno.tools.yfinance import YFinanceTools
-from agno.utils.string import is_valid_uuid
->>>>>>> origin/main:libs/agno/tests/unit/team/test_basic.py
-
 
 @pytest.fixture
 def team():

@@ -7,7 +7,7 @@ from agno_v2.db.base import AsyncBaseDb
 from agno_v2.memory import MemoryManager, UserMemory
 
 if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
+    from agno_v2.tracing.schemas import Span, Trace
 
 
 class DummyAsyncMemoryDb(AsyncBaseDb):

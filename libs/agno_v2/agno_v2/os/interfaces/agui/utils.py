@@ -24,22 +24,12 @@ from ag_ui.core import (
 from ag_ui.core.types import Message as AGUIMessage
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/os/interfaces/agui/utils.py
 from agno_v2.models.message import Message
 from agno_v2.run.agent import RunContentEvent, RunEvent, RunOutputEvent, RunPausedEvent
 from agno_v2.run.team import RunContentEvent as TeamRunContentEvent
 from agno_v2.run.team import TeamRunEvent, TeamRunOutputEvent
 from agno_v2.utils.log import log_warning
 from agno_v2.utils.message import get_text_from_message
-=======
-from agno.models.message import Message
-from agno.run.agent import RunContentEvent, RunEvent, RunOutputEvent, RunPausedEvent
-from agno.run.team import RunContentEvent as TeamRunContentEvent
-from agno.run.team import TeamRunEvent, TeamRunOutputEvent
-from agno.utils.log import log_debug, log_warning
-from agno.utils.message import get_text_from_message
->>>>>>> origin/main:libs/agno/agno/os/interfaces/agui/utils.py
-
 
 def validate_agui_state(state: Any, thread_id: str) -> Optional[Dict[str, Any]]:
     """Validate the given AGUI state is of the expected type (dict)."""

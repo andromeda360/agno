@@ -3,20 +3,11 @@ import time
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/couchbase/couchbase.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.embedder.openai import OpenAIEmbedder
 from agno_v2.utils.log import log_debug, log_info, logger
 from agno_v2.vectordb.base import VectorDb
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.utils.log import log_debug, log_info, log_warning, logger
-from agno.vectordb.base import VectorDb
->>>>>>> origin/main:libs/agno/agno/vectordb/couchbase/couchbase.py
-
 try:
     from hashlib import md5
 
@@ -105,7 +96,7 @@ class CouchbaseSearch(VectorDb):
         self.connection_string = couchbase_connection_string
         self.cluster_options = cluster_options
         if embedder is None:
-            from agno.knowledge.embedder.openai import OpenAIEmbedder
+            from agno_v2.knowledge.embedder.openai import OpenAIEmbedder
 
             embedder = OpenAIEmbedder()
             log_info("Embedder not provided, using OpenAIEmbedder as default.")

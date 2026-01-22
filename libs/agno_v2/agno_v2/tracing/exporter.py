@@ -9,9 +9,9 @@ from typing import Dict, List, Sequence, Union
 from opentelemetry.sdk.trace import ReadableSpan  # type: ignore
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult  # type: ignore
 
-from agno.db.base import AsyncBaseDb, BaseDb
-from agno.tracing.schemas import Span, create_trace_from_spans
-from agno.utils.log import logger
+from agno_v2.db.base import AsyncBaseDb, BaseDb
+from agno_v2.tracing.schemas import Span, create_trace_from_spans
+from agno_v2.utils.log import logger
 
 
 class DatabaseSpanExporter(SpanExporter):

@@ -2,9 +2,9 @@
 
 from pydantic import BaseModel
 
-from agno.agent.agent import Agent
-from agno.workflow import Step, Workflow
-from agno.workflow.types import StepInput, StepOutput
+from agno_v2.agent.agent import Agent
+from agno_v2.workflow import Step, Workflow
+from agno_v2.workflow.types import StepInput, StepOutput
 
 
 def test_agent_stream_basic_events():

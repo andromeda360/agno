@@ -24,10 +24,10 @@ import httpx
 import pytest
 from httpx import ASGITransport
 
-from agno.agent.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.os import AgentOS
-from agno.run.agent import RunOutput
+from agno_v2.agent.agent import Agent
+from agno_v2.models.openai import OpenAIChat
+from agno_v2.os import AgentOS
+from agno_v2.run.agent import RunOutput
 
 
 @pytest.fixture

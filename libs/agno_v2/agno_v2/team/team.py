@@ -31,22 +31,13 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/team/team.py
 from agno_v2.agent import Agent
 from agno_v2.db.base import AsyncBaseDb, BaseDb, SessionType, UserMemory
-from agno_v2.exceptions import (
-=======
-from agno.agent import Agent
-from agno.compression.manager import CompressionManager
-from agno.db.base import AsyncBaseDb, BaseDb, SessionType, UserMemory
-from agno.exceptions import (
->>>>>>> origin/main:libs/agno/agno/team/team.py
-    InputCheckError,
+from agno_v2.exceptions import (    InputCheckError,
     ModelProviderError,
     OutputCheckError,
     RunCancelledException,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/team/team.py
 from agno_v2.guardrails import BaseGuardrail
 from agno_v2.knowledge.knowledge import Knowledge
 from agno_v2.knowledge.types import KnowledgeFilter
@@ -60,32 +51,13 @@ from agno_v2.models.utils import get_model
 from agno_v2.reasoning.step import NextAction, ReasoningStep, ReasoningSteps
 from agno_v2.run import RunContext, RunStatus
 from agno_v2.run.agent import RunEvent, RunOutput, RunOutputEvent
-from agno_v2.run.cancel import (
-=======
-from agno.filters import FilterExpr
-from agno.guardrails import BaseGuardrail
-from agno.knowledge.knowledge import Knowledge
-from agno.knowledge.types import KnowledgeFilter
-from agno.media import Audio, File, Image, Video
-from agno.memory import MemoryManager
-from agno.models.base import Model
-from agno.models.message import Message, MessageReferences
-from agno.models.metrics import Metrics
-from agno.models.response import ModelResponse, ModelResponseEvent
-from agno.models.utils import get_model
-from agno.reasoning.step import NextAction, ReasoningStep, ReasoningSteps
-from agno.run import RunContext, RunStatus
-from agno.run.agent import RunEvent, RunOutput, RunOutputEvent
-from agno.run.cancel import (
->>>>>>> origin/main:libs/agno/agno/team/team.py
-    cancel_run as cancel_run_global,
+from agno_v2.run.cancel import (    cancel_run as cancel_run_global,
 )
 from agno_v2.run.cancel import (
     cleanup_run,
     raise_if_cancelled,
     register_run,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/team/team.py
 from agno_v2.run.messages import RunMessages
 from agno_v2.run.team import TeamRunEvent, TeamRunInput, TeamRunOutput, TeamRunOutputEvent
 from agno_v2.session import SessionSummaryManager, TeamSession, WorkflowSession
@@ -93,19 +65,7 @@ from agno_v2.session.summary import SessionSummary
 from agno_v2.tools import Toolkit
 from agno_v2.tools.function import Function
 from agno_v2.utils.agent import (
-    aget_chat_history_util,
-=======
-from agno.run.messages import RunMessages
-from agno.run.team import TeamRunEvent, TeamRunInput, TeamRunOutput, TeamRunOutputEvent
-from agno.session import SessionSummaryManager, TeamSession, WorkflowSession
-from agno.session.summary import SessionSummary
-from agno.tools import Toolkit
-from agno.tools.function import Function
-from agno.utils.agent import (
-    aexecute_instructions,
-    aexecute_system_message,
->>>>>>> origin/main:libs/agno/agno/team/team.py
-    aget_last_run_output_util,
+    aget_chat_history_util,    aget_last_run_output_util,
     aget_run_output_util,
     aget_session_metrics_util,
     aget_session_name_util,
@@ -158,16 +118,9 @@ from agno_v2.utils.events import (
     create_team_tool_call_started_event,
     handle_event,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/team/team.py
 from agno_v2.utils.hooks import filter_hook_args, normalize_hooks
 from agno_v2.utils.knowledge import get_agentic_or_user_search_filters
-from agno_v2.utils.log import (
-=======
-from agno.utils.hooks import copy_args_for_background, filter_hook_args, normalize_hooks, should_run_hook_in_background
-from agno.utils.knowledge import get_agentic_or_user_search_filters
-from agno.utils.log import (
->>>>>>> origin/main:libs/agno/agno/team/team.py
-    log_debug,
+from agno_v2.utils.log import (    log_debug,
     log_error,
     log_exception,
     log_info,
@@ -798,25 +751,14 @@ class Team:
             self.id = generate_id_from_name(self.name)
 
     def _set_debug(self, debug_mode: Optional[bool] = None) -> None:
-<<<<<<< HEAD:libs/agno_v2/agno_v2/team/team.py
-        if self.debug_mode or debug_mode or getenv("AGNO_V2_DEBUG", "false").lower() == "true":
-            set_log_level_to_debug(source_type="team", level=self.debug_level)
-=======
-        # Get the debug level from the environment variable or the default debug level
-        debug_level: Literal[1, 2] = (
-            cast(Literal[1, 2], int(env)) if (env := getenv("AGNO_DEBUG_LEVEL")) in ("1", "2") else self.debug_level
-        )
-        # If the default debug mode is set, or passed on run, or via environment variable, set the debug mode to True
-        if self.debug_mode or debug_mode or getenv("AGNO_DEBUG", "false").lower() == "true":
-            set_log_level_to_debug(source_type="team", level=debug_level)
->>>>>>> origin/main:libs/agno/agno/team/team.py
-        else:
+        if self.debug_mode or debug_mode or getenv("AGNO_V2_V2_DEBUG", "false").lower() == "true":
+            set_log_level_to_debug(source_type="team", level=self.debug_level)        else:
             set_log_level_to_info(source_type="team")
 
     def _set_telemetry(self) -> None:
         """Override telemetry settings based on environment variables."""
 
-        telemetry_env = getenv("AGNO_V2_TELEMETRY")
+        telemetry_env = getenv("AGNO_V2_V2_TELEMETRY")
         if telemetry_env is not None:
             self.telemetry = telemetry_env.lower() == "true"
 

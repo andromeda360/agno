@@ -22,21 +22,11 @@ except ImportError:
     raise ImportError("The `pinecone` package is not installed, please install using `pip install pinecone`.")
 
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/vectordb/pineconedb/pineconedb.py
 from agno_v2.knowledge.document import Document
 from agno_v2.knowledge.embedder import Embedder
 from agno_v2.knowledge.reranker.base import Reranker
 from agno_v2.utils.log import log_debug, log_info, log_warning, logger
 from agno_v2.vectordb.base import VectorDb
-=======
-from agno.filters import FilterExpr
-from agno.knowledge.document import Document
-from agno.knowledge.embedder import Embedder
-from agno.knowledge.reranker.base import Reranker
-from agno.utils.log import log_debug, log_info, log_warning, logger
-from agno.vectordb.base import VectorDb
->>>>>>> origin/main:libs/agno/agno/vectordb/pineconedb/pineconedb.py
-
 
 class PineconeDb(VectorDb):
     """A class representing a Pinecone database.

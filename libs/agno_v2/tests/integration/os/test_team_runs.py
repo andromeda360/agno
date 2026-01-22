@@ -3,8 +3,8 @@
 import json
 from unittest.mock import AsyncMock, patch
 
-from agno.run import RunContext
-from agno.team.team import Team
+from agno_v2.run import RunContext
+from agno_v2.team.team import Team
 
 
 def test_create_team_run(test_os_client, test_team: Team):

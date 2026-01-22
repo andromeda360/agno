@@ -3,7 +3,7 @@ from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
 
 if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
+    from agno_v2.tracing.schemas import Span, Trace
 
 from agno_v2.db.base import BaseDb, SessionType
 from agno_v2.db.postgres.utils import (
@@ -1745,7 +1745,7 @@ class SurrealDb(BaseDb):
 
     def _deserialize_trace(self, trace_data: dict) -> "Trace":
         """Helper to deserialize a trace record from SurrealDB."""
-        from agno.tracing.schemas import Trace
+        from agno_v2.tracing.schemas import Trace
 
         # Handle RecordID for id field
         if isinstance(trace_data.get("id"), RecordID):
@@ -1892,7 +1892,7 @@ class SurrealDb(BaseDb):
 
     def _deserialize_span(self, span_data: dict) -> "Span":
         """Helper to deserialize a span record from SurrealDB."""
-        from agno.tracing.schemas import Span
+        from agno_v2.tracing.schemas import Span
 
         # Handle RecordID for id field
         if isinstance(span_data.get("id"), RecordID):

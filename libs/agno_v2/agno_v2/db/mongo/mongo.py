@@ -3,17 +3,8 @@ from datetime import date, datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import uuid4
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/db/mongo/mongo.py
 from agno_v2.db.base import BaseDb, SessionType
-from agno_v2.db.mongo.utils import (
-=======
-if TYPE_CHECKING:
-    from agno.tracing.schemas import Span, Trace
-
-from agno.db.base import BaseDb, SessionType
-from agno.db.mongo.utils import (
->>>>>>> origin/main:libs/agno/agno/db/mongo/mongo.py
-    apply_pagination,
+from agno_v2.db.mongo.utils import (    apply_pagination,
     apply_sorting,
     bulk_upsert_metrics,
     calculate_date_metrics,
@@ -2145,7 +2136,7 @@ class MongoDb(BaseDb):
             For other filters, the most recent trace is returned.
         """
         try:
-            from agno.tracing.schemas import Trace as TraceSchema
+            from agno_v2.tracing.schemas import Trace as TraceSchema
 
             collection = self._get_collection(table_type="traces")
             if collection is None:
@@ -2220,7 +2211,7 @@ class MongoDb(BaseDb):
             tuple[List[Trace], int]: Tuple of (list of matching traces, total count).
         """
         try:
-            from agno.tracing.schemas import Trace as TraceSchema
+            from agno_v2.tracing.schemas import Trace as TraceSchema
 
             log_debug(
                 f"get_traces called with filters: run_id={run_id}, session_id={session_id}, "
@@ -2461,7 +2452,7 @@ class MongoDb(BaseDb):
             Optional[Span]: The span if found, None otherwise.
         """
         try:
-            from agno.tracing.schemas import Span as SpanSchema
+            from agno_v2.tracing.schemas import Span as SpanSchema
 
             collection = self._get_collection(table_type="spans")
             if collection is None:
@@ -2495,7 +2486,7 @@ class MongoDb(BaseDb):
             List[Span]: List of matching spans.
         """
         try:
-            from agno.tracing.schemas import Span as SpanSchema
+            from agno_v2.tracing.schemas import Span as SpanSchema
 
             collection = self._get_collection(table_type="spans")
             if collection is None:

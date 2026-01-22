@@ -1,8 +1,8 @@
 import pytest
 
-from agno.agent import Agent, RunOutput  # noqa
-from agno.models.openai import OpenAIChat
-from agno.tools.decorator import tool
+from agno_v2.agent import Agent, RunOutput  # noqa
+from agno_v2.models.openai import OpenAIChat
+from agno_v2.tools.decorator import tool
 
 
 def test_tool_call_requires_confirmation(shared_db):

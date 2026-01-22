@@ -4,15 +4,8 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/openrouter/openrouter.py
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.run.agent import RunOutput
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.openai.like import OpenAILike
-from agno.run.agent import RunOutput
->>>>>>> origin/main:libs/agno/agno/models/openrouter/openrouter.py
-
 
 @dataclass
 class OpenRouter(OpenAILike):

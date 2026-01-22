@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Type, Union
 import httpx
 from pydantic import BaseModel
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/aws/claude.py
 from agno_v2.exceptions import ModelProviderError, ModelRateLimitError
 from agno_v2.models.anthropic import Claude as AnthropicClaude
 from agno_v2.models.message import Message
@@ -13,13 +12,6 @@ from agno_v2.models.response import ModelResponse
 from agno_v2.run.agent import RunOutput
 from agno_v2.utils.log import log_debug, log_error, log_warning
 from agno_v2.utils.models.claude import format_messages
-=======
-from agno.models.anthropic import Claude as AnthropicClaude
-from agno.utils.http import get_default_async_client, get_default_sync_client
-from agno.utils.log import log_debug, log_error, log_warning
-from agno.utils.models.claude import format_tools_for_model
->>>>>>> origin/main:libs/agno/agno/models/aws/claude.py
-
 try:
     from anthropic import AnthropicBedrock, AsyncAnthropicBedrock
 except ImportError:

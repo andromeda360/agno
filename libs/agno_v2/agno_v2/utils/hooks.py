@@ -1,15 +1,8 @@
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/utils/hooks.py
 from agno_v2.guardrails.base import BaseGuardrail
 from agno_v2.utils.log import log_warning
-=======
-from agno.guardrails.base import BaseGuardrail
-from agno.hooks.decorator import HOOK_RUN_IN_BACKGROUND_ATTR
-from agno.utils.log import log_warning
->>>>>>> origin/main:libs/agno/agno/utils/hooks.py
-
 # Keys that should be deep copied for background hooks to prevent race conditions
 BACKGROUND_HOOK_COPY_KEYS = frozenset(
     {"run_input", "run_context", "run_output", "session_state", "dependencies", "metadata"}

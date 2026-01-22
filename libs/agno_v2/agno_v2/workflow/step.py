@@ -8,7 +8,6 @@ from uuid import uuid4
 from pydantic import BaseModel
 from typing_extensions import TypeGuard
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/workflow/step.py
 from agno_v2.agent import Agent
 from agno_v2.media import Audio, Image, Video
 from agno_v2.models.metrics import Metrics
@@ -18,40 +17,16 @@ from agno_v2.run.base import BaseRunOutputEvent
 from agno_v2.run.team import RunCompletedEvent as TeamRunCompletedEvent
 from agno_v2.run.team import RunContentEvent as TeamRunContentEvent
 from agno_v2.run.team import TeamRunOutput
-from agno_v2.run.workflow import (
-=======
-from agno.agent import Agent
-from agno.media import Audio, Image, Video
-from agno.models.message import Message
-from agno.models.metrics import Metrics
-from agno.run import RunContext
-from agno.run.agent import RunContentEvent, RunOutput
-from agno.run.base import BaseRunOutputEvent
-from agno.run.team import RunContentEvent as TeamRunContentEvent
-from agno.run.team import TeamRunOutput
-from agno.run.workflow import (
->>>>>>> origin/main:libs/agno/agno/workflow/step.py
-    StepCompletedEvent,
+from agno_v2.run.workflow import (    StepCompletedEvent,
     StepStartedEvent,
     WorkflowRunOutput,
     WorkflowRunOutputEvent,
 )
-<<<<<<< HEAD:libs/agno_v2/agno_v2/workflow/step.py
 from agno_v2.session.workflow import WorkflowSession
 from agno_v2.team import Team
 from agno_v2.utils.log import log_debug, logger, use_agent_logger, use_team_logger, use_workflow_logger
 from agno_v2.utils.merge_dict import merge_dictionaries
 from agno_v2.workflow.types import StepInput, StepOutput, StepType
-=======
-from agno.session.agent import AgentSession
-from agno.session.team import TeamSession
-from agno.session.workflow import WorkflowSession
-from agno.team import Team
-from agno.utils.log import log_debug, log_warning, logger, use_agent_logger, use_team_logger, use_workflow_logger
-from agno.utils.merge_dict import merge_dictionaries
-from agno.workflow.types import StepInput, StepOutput, StepType
->>>>>>> origin/main:libs/agno/agno/workflow/step.py
-
 StepExecutor = Callable[
     [StepInput],
     Union[

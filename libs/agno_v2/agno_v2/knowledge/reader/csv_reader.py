@@ -10,22 +10,12 @@ try:
 except ImportError:
     raise ImportError("`aiofiles` not installed. Please install it with `pip install aiofiles`")
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/reader/csv_reader.py
 from agno_v2.knowledge.chunking.row import RowChunking
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.reader.base import Reader
 from agno_v2.knowledge.types import ContentType
 from agno_v2.utils.log import logger
-=======
-from agno.knowledge.chunking.row import RowChunking
-from agno.knowledge.chunking.strategy import ChunkingStrategy, ChunkingStrategyType
-from agno.knowledge.document.base import Document
-from agno.knowledge.reader.base import Reader
-from agno.knowledge.types import ContentType
-from agno.utils.log import log_debug, log_error
->>>>>>> origin/main:libs/agno/agno/knowledge/reader/csv_reader.py
-
 
 class CSVReader(Reader):
     """Reader for CSV files"""

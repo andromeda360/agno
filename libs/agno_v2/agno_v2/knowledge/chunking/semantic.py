@@ -1,25 +1,17 @@
 import inspect
 from typing import Any, Dict, List, Optional
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/knowledge/chunking/semantic.py
 from agno_v2.knowledge.chunking.strategy import ChunkingStrategy
 from agno_v2.knowledge.document.base import Document
 from agno_v2.knowledge.embedder.base import Embedder
 from agno_v2.knowledge.embedder.openai import OpenAIEmbedder
-=======
-from agno.knowledge.chunking.strategy import ChunkingStrategy
-from agno.knowledge.document.base import Document
-from agno.knowledge.embedder.base import Embedder
-from agno.utils.log import log_info
->>>>>>> origin/main:libs/agno/agno/knowledge/chunking/semantic.py
-
 
 class SemanticChunking(ChunkingStrategy):
     """Chunking strategy that splits text into semantic chunks using chonkie"""
 
     def __init__(self, embedder: Optional[Embedder] = None, chunk_size: int = 5000, similarity_threshold: float = 0.5):
         if embedder is None:
-            from agno.knowledge.embedder.openai import OpenAIEmbedder
+            from agno_v2.knowledge.embedder.openai import OpenAIEmbedder
 
             embedder = OpenAIEmbedder()  # type: ignore
             log_info("Embedder not provided, using OpenAIEmbedder as default.")

@@ -3,21 +3,11 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Mapping, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/session/agent.py
 from agno_v2.models.message import Message
 from agno_v2.run.agent import RunOutput
 from agno_v2.run.base import RunStatus
 from agno_v2.session.summary import SessionSummary
 from agno_v2.utils.log import log_debug, log_warning
-=======
-from agno.models.message import Message
-from agno.run.agent import RunOutput
-from agno.run.base import RunStatus
-from agno.run.team import TeamRunOutput
-from agno.session.summary import SessionSummary
-from agno.utils.log import log_debug, log_warning
->>>>>>> origin/main:libs/agno/agno/session/agent.py
-
 
 @dataclass
 class AgentSession:

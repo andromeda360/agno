@@ -1,12 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/utils/knowledge.py
 from agno_v2.utils.log import log_info
-=======
-from agno.filters import FilterExpr
-from agno.utils.log import log_info
->>>>>>> origin/main:libs/agno/agno/utils/knowledge.py
-
 
 def get_agentic_or_user_search_filters(
     filters: Optional[Dict[str, Any]], effective_filters: Optional[Union[Dict[str, Any], List[FilterExpr]]]

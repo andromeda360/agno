@@ -1,15 +1,8 @@
 import json
 import time
 
-<<<<<<< HEAD:libs/agno_v2/tests/unit/response.py
 from agno_v2.models.message import Message, Metrics
 from agno_v2.run.agent import RunOutput
-=======
-from agno.models.message import Message, Metrics
-from agno.models.response import ToolExecution
-from agno.run.agent import RunOutput
->>>>>>> origin/main:libs/agno/tests/unit/response.py
-
 
 def test_timer_serialization():
     message_1 = Message(role="user", content="Hello, world!")

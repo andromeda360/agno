@@ -4,16 +4,8 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-<<<<<<< HEAD:libs/agno_v2/agno_v2/models/azure/openai_chat.py
 from agno_v2.models.openai.like import OpenAILike
 from agno_v2.utils.log import log_debug
-=======
-from agno.exceptions import ModelAuthenticationError
-from agno.models.openai.like import OpenAILike
-from agno.utils.http import get_default_async_client, get_default_sync_client
-from agno.utils.log import log_warning
->>>>>>> origin/main:libs/agno/agno/models/azure/openai_chat.py
-
 try:
     from openai import AsyncAzureOpenAI as AsyncAzureOpenAIClient
     from openai import AzureOpenAI as AzureOpenAIClient
