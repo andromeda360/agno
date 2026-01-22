@@ -1,3 +1,4 @@
+from agno_v2.run.requirement import RunRequirement
 import asyncio
 import collections.abc
 import json
@@ -358,12 +359,9 @@ class Model(ABC):
             log_debug(f"{self.get_provider()} Response Start", center=True, symbol="-")
             log_debug(f"Model: {self.id}", center=True, symbol="-")
 
-            _log_messages(messages)
+            if self.log_messages:
+                _log_messages(messages)
             model_response = ModelResponse()
-
-        if self.log_messages:
-            _log_messages(messages)
-        model_response = ModelResponse()
             _tool_dicts = self._format_tools(tools) if tools is not None else []
             _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
 
@@ -559,16 +557,9 @@ class Model(ABC):
                     log_info("Cache hit for model response")
                     return self._model_response_from_cache(cached_data)
 
-            log_debug(f"{self.get_provider()} Async Response Start", center=True, symbol="-")
-            log_debug(f"Model: {self.id}", center=True, symbol="-")
-            _log_messages(messages)
+            if self.log_messages:
+                _log_messages(messages)
             model_response = ModelResponse()
-
-        log_debug(f"{self.get_provider()} Async Response Start", center=True, symbol="-")
-        log_debug(f"Model: {self.id}", center=True, symbol="-")
-        if self.log_messages:
-            _log_messages(messages)
-        model_response = ModelResponse()
             _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
 
             function_call_count = 0
@@ -968,63 +959,12 @@ class Model(ABC):
         """
         Generate a streaming response from the model.
         """
+        try:
 
-        # Check cache if enabled - capture key BEFORE streaming to avoid mismatch
-        cache_key = None
-        if self.cache_response:
-            cache_key = self._get_model_cache_key(messages, stream=True, response_format=response_format, tools=tools)
-            cached_data = self._get_cached_model_response(cache_key)
-
-            if cached_data:
-                log_info("Cache hit for streaming model response")
-                # Yield cached responses
-                for response in self._streaming_responses_from_cache(cached_data["streaming_responses"]):
-                    yield response
-                return
-
-            log_info("Cache miss for streaming model response")
-
-        # Track streaming responses for caching
-        streaming_responses: List[ModelResponse] = []
-
-        log_debug(f"{self.get_provider()} Response Stream Start", center=True, symbol="-")
-        log_debug(f"Model: {self.id}", center=True, symbol="-")
-        if self.log_messages:
-            _log_messages(messages)
-
-        _tool_dicts = self._format_tools(tools) if tools is not None else []
-        _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
-
-        function_call_count = 0
-
-        while True:
-            assistant_message = Message(role=self.assistant_message_role)
-            # Create assistant message and stream data
-            stream_data = MessageData()
-            model_response = ModelResponse()
-            if stream_model_response:
-                # Generate response
-                for response in self.process_response_stream(
-                    messages=messages,
-                    assistant_message=assistant_message,
-                    stream_data=stream_data,
-                    response_format=response_format,
-                    tools=_tool_dicts,
-                    tool_choice=tool_choice or self._tool_choice,
-                    run_response=run_response,
-                ):
-                    if self.cache_response and isinstance(response, ModelResponse):
-                        streaming_responses.append(response)
-                    yield response
-
-            else:
-                self._process_model_response(
-                    messages=messages,
-                    assistant_message=assistant_message,
-                    model_response=model_response,
-                    response_format=response_format,
-                    tools=_tool_dicts,
-                    tool_choice=tool_choice or self._tool_choice,                )
+            # Check cache if enabled - capture key BEFORE streaming to avoid mismatch
+            cache_key = None
+            if self.cache_response:
+                cache_key = self._get_model_cache_key(messages, stream=True, response_format=response_format, tools=tools)
                 cached_data = self._get_cached_model_response(cache_key)
 
                 if cached_data:
@@ -1041,12 +981,11 @@ class Model(ABC):
 
             log_debug(f"{self.get_provider()} Response Stream Start", center=True, symbol="-")
             log_debug(f"Model: {self.id}", center=True, symbol="-")
-            _log_messages(messages)
+            if self.log_messages:
+                _log_messages(messages)
 
             _tool_dicts = self._format_tools(tools) if tools is not None else []
             _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
-
-            _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
 
             function_call_count = 0
 
@@ -1065,7 +1004,6 @@ class Model(ABC):
                         tools=_tool_dicts,
                         tool_choice=tool_choice or self._tool_choice,
                         run_response=run_response,
-                        compress_tool_results=_compress_tool_results,
                     ):
                         if self.cache_response and isinstance(response, ModelResponse):
                             streaming_responses.append(response)
@@ -1078,105 +1016,159 @@ class Model(ABC):
                         model_response=model_response,
                         response_format=response_format,
                         tools=_tool_dicts,
-                        tool_choice=tool_choice or self._tool_choice,
-                        run_response=run_response,
-                        compress_tool_results=_compress_tool_results,
-                    )
-                    if self.cache_response:
-                        streaming_responses.append(model_response)
-                    yield model_response
+                        tool_choice=tool_choice or self._tool_choice,                )
+                    cached_data = self._get_cached_model_response(cache_key)
 
-                # Add assistant message to messages
-                messages.append(assistant_message)
-                assistant_message.log(metrics=True)
+                    if cached_data:
+                        log_info("Cache hit for streaming model response")
+                        # Yield cached responses
+                        for response in self._streaming_responses_from_cache(cached_data["streaming_responses"]):
+                            yield response
+                        return
 
-                # Handle tool calls if present
-                if assistant_message.tool_calls is not None:
-                    # Prepare function calls
-                    function_calls_to_run: List[FunctionCall] = self.get_function_calls_to_run(
-                        assistant_message=assistant_message, messages=messages, functions=_functions
-                    )
-                    function_call_results: List[Message] = []
+                    log_info("Cache miss for streaming model response")
 
-                    # Execute function calls
-                    for function_call_response in self.run_function_calls(
-                        function_calls=function_calls_to_run,
-                        function_call_results=function_call_results,
-                        current_function_call_count=function_call_count,
-                        function_call_limit=tool_call_limit,
-                    ):
-                        if self.cache_response and isinstance(function_call_response, ModelResponse):
-                            streaming_responses.append(function_call_response)
-                        yield function_call_response
+                # Track streaming responses for caching
+                streaming_responses: List[ModelResponse] = []
 
-                    # Add a function call for each successful execution
-                    function_call_count += len(function_call_results)
+                log_debug(f"{self.get_provider()} Response Stream Start", center=True, symbol="-")
+                log_debug(f"Model: {self.id}", center=True, symbol="-")
+                _log_messages(messages)
 
-                    all_messages = messages + function_call_results
-                    # Compress tool results
-                    if compression_manager and compression_manager.should_compress(all_messages):
-                        compression_manager.compress(all_messages)
+                _tool_dicts = self._format_tools(tools) if tools is not None else []
+                _functions = {tool.name: tool for tool in tools if isinstance(tool, Function)} if tools is not None else {}
 
-                    # Format and add results to messages
-                    if stream_data and stream_data.extra is not None:
-                        self.format_function_call_results(
+                _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
+
+                function_call_count = 0
+
+                while True:
+                    assistant_message = Message(role=self.assistant_message_role)
+                    # Create assistant message and stream data
+                    stream_data = MessageData()
+                    model_response = ModelResponse()
+                    if stream_model_response:
+                        # Generate response
+                        for response in self.process_response_stream(
                             messages=messages,
-                            function_call_results=function_call_results,
+                            assistant_message=assistant_message,
+                            stream_data=stream_data,
+                            response_format=response_format,
+                            tools=_tool_dicts,
+                            tool_choice=tool_choice or self._tool_choice,
+                            run_response=run_response,
                             compress_tool_results=_compress_tool_results,
-                            **stream_data.extra,
-                        )
-                    elif model_response and model_response.extra is not None:
-                        self.format_function_call_results(
-                            messages=messages,
-                            function_call_results=function_call_results,
-                            compress_tool_results=_compress_tool_results,
-                            **model_response.extra,
-                        )
+                        ):
+                            if self.cache_response and isinstance(response, ModelResponse):
+                                streaming_responses.append(response)
+                            yield response
+
                     else:
-                        self.format_function_call_results(
+                        self._process_model_response(
                             messages=messages,
-                            function_call_results=function_call_results,
+                            assistant_message=assistant_message,
+                            model_response=model_response,
+                            response_format=response_format,
+                            tools=_tool_dicts,
+                            tool_choice=tool_choice or self._tool_choice,
+                            run_response=run_response,
                             compress_tool_results=_compress_tool_results,
                         )
+                        if self.cache_response:
+                            streaming_responses.append(model_response)
+                        yield model_response
 
-                    # Handle function call media
-                    if any(msg.images or msg.videos or msg.audio or msg.files for msg in function_call_results):
-                        self._handle_function_call_media(
-                            messages=messages,
-                            function_call_results=function_call_results,
-                            send_media_to_model=send_media_to_model,
+                    # Add assistant message to messages
+                    messages.append(assistant_message)
+                    assistant_message.log(metrics=True)
+
+                    # Handle tool calls if present
+                    if assistant_message.tool_calls is not None:
+                        # Prepare function calls
+                        function_calls_to_run: List[FunctionCall] = self.get_function_calls_to_run(
+                            assistant_message=assistant_message, messages=messages, functions=_functions
                         )
+                        function_call_results: List[Message] = []
 
-                    for function_call_result in function_call_results:
-                        function_call_result.log(metrics=True, use_compressed_content=_compress_tool_results)
+                        # Execute function calls
+                        for function_call_response in self.run_function_calls(
+                            function_calls=function_calls_to_run,
+                            function_call_results=function_call_results,
+                            current_function_call_count=function_call_count,
+                            function_call_limit=tool_call_limit,
+                        ):
+                            if self.cache_response and isinstance(function_call_response, ModelResponse):
+                                streaming_responses.append(function_call_response)
+                            yield function_call_response
 
-                    # Check if we should stop after tool calls
-                    if any(m.stop_after_tool_call for m in function_call_results):
-                        break
+                        # Add a function call for each successful execution
+                        function_call_count += len(function_call_results)
 
-                    # If we have any tool calls that require confirmation, break the loop
-                    if any(fc.function.requires_confirmation for fc in function_calls_to_run):
-                        break
+                        all_messages = messages + function_call_results
+                        # Compress tool results
+                        if compression_manager and compression_manager.should_compress(all_messages):
+                            compression_manager.compress(all_messages)
 
-                    # If we have any tool calls that require external execution, break the loop
-                    if any(fc.function.external_execution for fc in function_calls_to_run):
-                        break
+                        # Format and add results to messages
+                        if stream_data and stream_data.extra is not None:
+                            self.format_function_call_results(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                compress_tool_results=_compress_tool_results,
+                                **stream_data.extra,
+                            )
+                        elif model_response and model_response.extra is not None:
+                            self.format_function_call_results(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                compress_tool_results=_compress_tool_results,
+                                **model_response.extra,
+                            )
+                        else:
+                            self.format_function_call_results(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                compress_tool_results=_compress_tool_results,
+                            )
 
-                    # If we have any tool calls that require user input, break the loop
-                    if any(fc.function.requires_user_input for fc in function_calls_to_run):
-                        break
+                        # Handle function call media
+                        if any(msg.images or msg.videos or msg.audio or msg.files for msg in function_call_results):
+                            self._handle_function_call_media(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                send_media_to_model=send_media_to_model,
+                            )
 
-                    # Continue loop to get next response
-                    continue
+                        for function_call_result in function_call_results:
+                            function_call_result.log(metrics=True, use_compressed_content=_compress_tool_results)
 
-                # No tool calls or finished processing them
-                break
+                        # Check if we should stop after tool calls
+                        if any(m.stop_after_tool_call for m in function_call_results):
+                            break
 
-            log_debug(f"{self.get_provider()} Response Stream End", center=True, symbol="-")
+                        # If we have any tool calls that require confirmation, break the loop
+                        if any(fc.function.requires_confirmation for fc in function_calls_to_run):
+                            break
 
-            # Save streaming responses to cache if enabled
-            if self.cache_response and cache_key and streaming_responses:
-                self._save_streaming_responses_to_cache(cache_key, streaming_responses)
+                        # If we have any tool calls that require external execution, break the loop
+                        if any(fc.function.external_execution for fc in function_calls_to_run):
+                            break
+
+                        # If we have any tool calls that require user input, break the loop
+                        if any(fc.function.requires_user_input for fc in function_calls_to_run):
+                            break
+
+                        # Continue loop to get next response
+                        continue
+
+                    # No tool calls or finished processing them
+                    break
+
+                log_debug(f"{self.get_provider()} Response Stream End", center=True, symbol="-")
+
+                # Save streaming responses to cache if enabled
+                if self.cache_response and cache_key and streaming_responses:
+                    self._save_streaming_responses_to_cache(cache_key, streaming_responses)
         finally:
             # Close the Gemini client
             if self.__class__.__name__ == "Gemini" and self.client is not None:
@@ -1256,146 +1248,141 @@ class Model(ABC):
 
             # Track streaming responses for caching
             streaming_responses: List[ModelResponse] = []
-
             log_debug(f"{self.get_provider()} Async Response Stream Start", center=True, symbol="-")
             log_debug(f"Model: {self.id}", center=True, symbol="-")
-            _log_messages(messages)
+            if self.log_messages:
+                _log_messages(messages)
+                _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
 
-        log_debug(f"{self.get_provider()} Async Response Stream Start", center=True, symbol="-")
-        log_debug(f"Model: {self.id}", center=True, symbol="-")
-        if self.log_messages:
-            _log_messages(messages)
-            _compress_tool_results = compression_manager is not None and compression_manager.compress_tool_results
+                function_call_count = 0
 
-            function_call_count = 0
+                while True:
+                    # Create assistant message and stream data
+                    assistant_message = Message(role=self.assistant_message_role)
+                    stream_data = MessageData()
+                    model_response = ModelResponse()
+                    if stream_model_response:
+                        # Generate response
+                        async for model_response in self.aprocess_response_stream(
+                            messages=messages,
+                            assistant_message=assistant_message,
+                            stream_data=stream_data,
+                            response_format=response_format,
+                            tools=_tool_dicts,
+                            tool_choice=tool_choice or self._tool_choice,
+                            run_response=run_response,
+                            compress_tool_results=_compress_tool_results,
+                        ):
+                            if self.cache_response and isinstance(model_response, ModelResponse):
+                                streaming_responses.append(model_response)
+                            yield model_response
 
-            while True:
-                # Create assistant message and stream data
-                assistant_message = Message(role=self.assistant_message_role)
-                stream_data = MessageData()
-                model_response = ModelResponse()
-                if stream_model_response:
-                    # Generate response
-                    async for model_response in self.aprocess_response_stream(
-                        messages=messages,
-                        assistant_message=assistant_message,
-                        stream_data=stream_data,
-                        response_format=response_format,
-                        tools=_tool_dicts,
-                        tool_choice=tool_choice or self._tool_choice,
-                        run_response=run_response,
-                        compress_tool_results=_compress_tool_results,
-                    ):
-                        if self.cache_response and isinstance(model_response, ModelResponse):
+                    else:
+                        await self._aprocess_model_response(
+                            messages=messages,
+                            assistant_message=assistant_message,
+                            model_response=model_response,
+                            response_format=response_format,
+                            tools=_tool_dicts,
+                            tool_choice=tool_choice or self._tool_choice,
+                            run_response=run_response,
+                            compress_tool_results=_compress_tool_results,
+                        )
+                        if self.cache_response:
                             streaming_responses.append(model_response)
                         yield model_response
 
-                else:
-                    await self._aprocess_model_response(
-                        messages=messages,
-                        assistant_message=assistant_message,
-                        model_response=model_response,
-                        response_format=response_format,
-                        tools=_tool_dicts,
-                        tool_choice=tool_choice or self._tool_choice,
-                        run_response=run_response,
-                        compress_tool_results=_compress_tool_results,
-                    )
-                    if self.cache_response:
-                        streaming_responses.append(model_response)
-                    yield model_response
+                    # Add assistant message to messages
+                    messages.append(assistant_message)
+                    assistant_message.log(metrics=True)
 
-                # Add assistant message to messages
-                messages.append(assistant_message)
-                assistant_message.log(metrics=True)
-
-                # Handle tool calls if present
-                if assistant_message.tool_calls is not None:
-                    # Prepare function calls
-                    function_calls_to_run: List[FunctionCall] = self.get_function_calls_to_run(
-                        assistant_message=assistant_message, messages=messages, functions=_functions
-                    )
-                    function_call_results: List[Message] = []
-
-                    # Execute function calls
-                    async for function_call_response in self.arun_function_calls(
-                        function_calls=function_calls_to_run,
-                        function_call_results=function_call_results,
-                        current_function_call_count=function_call_count,
-                        function_call_limit=tool_call_limit,
-                    ):
-                        if self.cache_response and isinstance(function_call_response, ModelResponse):
-                            streaming_responses.append(function_call_response)
-                        yield function_call_response
-
-                    # Add a function call for each successful execution
-                    function_call_count += len(function_call_results)
-
-                    all_messages = messages + function_call_results
-                    # Compress tool results
-                    if compression_manager and compression_manager.should_compress(all_messages):
-                        await compression_manager.acompress(all_messages)
-
-                    # Format and add results to messages
-                    if stream_data and stream_data.extra is not None:
-                        self.format_function_call_results(
-                            messages=messages,
-                            function_call_results=function_call_results,
-                            compress_tool_results=_compress_tool_results,
-                            **stream_data.extra,
+                    # Handle tool calls if present
+                    if assistant_message.tool_calls is not None:
+                        # Prepare function calls
+                        function_calls_to_run: List[FunctionCall] = self.get_function_calls_to_run(
+                            assistant_message=assistant_message, messages=messages, functions=_functions
                         )
-                    elif model_response and model_response.extra is not None:
-                        self.format_function_call_results(
-                            messages=messages,
+                        function_call_results: List[Message] = []
+
+                        # Execute function calls
+                        async for function_call_response in self.arun_function_calls(
+                            function_calls=function_calls_to_run,
                             function_call_results=function_call_results,
-                            compress_tool_results=_compress_tool_results,
-                            **model_response.extra or {},
-                        )
-                    else:
-                        self.format_function_call_results(
-                            messages=messages,
-                            function_call_results=function_call_results,
-                            compress_tool_results=_compress_tool_results,
-                        )
+                            current_function_call_count=function_call_count,
+                            function_call_limit=tool_call_limit,
+                        ):
+                            if self.cache_response and isinstance(function_call_response, ModelResponse):
+                                streaming_responses.append(function_call_response)
+                            yield function_call_response
 
-                    # Handle function call media
-                    if any(msg.images or msg.videos or msg.audio or msg.files for msg in function_call_results):
-                        self._handle_function_call_media(
-                            messages=messages,
-                            function_call_results=function_call_results,
-                            send_media_to_model=send_media_to_model,
-                        )
+                        # Add a function call for each successful execution
+                        function_call_count += len(function_call_results)
 
-                    for function_call_result in function_call_results:
-                        function_call_result.log(metrics=True, use_compressed_content=_compress_tool_results)
+                        all_messages = messages + function_call_results
+                        # Compress tool results
+                        if compression_manager and compression_manager.should_compress(all_messages):
+                            await compression_manager.acompress(all_messages)
 
-                    # Check if we should stop after tool calls
-                    if any(m.stop_after_tool_call for m in function_call_results):
-                        break
+                        # Format and add results to messages
+                        if stream_data and stream_data.extra is not None:
+                            self.format_function_call_results(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                compress_tool_results=_compress_tool_results,
+                                **stream_data.extra,
+                            )
+                        elif model_response and model_response.extra is not None:
+                            self.format_function_call_results(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                compress_tool_results=_compress_tool_results,
+                                **model_response.extra or {},
+                            )
+                        else:
+                            self.format_function_call_results(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                compress_tool_results=_compress_tool_results,
+                            )
 
-                    # If we have any tool calls that require confirmation, break the loop
-                    if any(fc.function.requires_confirmation for fc in function_calls_to_run):
-                        break
+                        # Handle function call media
+                        if any(msg.images or msg.videos or msg.audio or msg.files for msg in function_call_results):
+                            self._handle_function_call_media(
+                                messages=messages,
+                                function_call_results=function_call_results,
+                                send_media_to_model=send_media_to_model,
+                            )
 
-                    # If we have any tool calls that require external execution, break the loop
-                    if any(fc.function.external_execution for fc in function_calls_to_run):
-                        break
+                        for function_call_result in function_call_results:
+                            function_call_result.log(metrics=True, use_compressed_content=_compress_tool_results)
 
-                    # If we have any tool calls that require user input, break the loop
-                    if any(fc.function.requires_user_input for fc in function_calls_to_run):
-                        break
+                        # Check if we should stop after tool calls
+                        if any(m.stop_after_tool_call for m in function_call_results):
+                            break
 
-                    # Continue loop to get next response
-                    continue
+                        # If we have any tool calls that require confirmation, break the loop
+                        if any(fc.function.requires_confirmation for fc in function_calls_to_run):
+                            break
 
-                # No tool calls or finished processing them
-                break
+                        # If we have any tool calls that require external execution, break the loop
+                        if any(fc.function.external_execution for fc in function_calls_to_run):
+                            break
 
-            log_debug(f"{self.get_provider()} Async Response Stream End", center=True, symbol="-")
+                        # If we have any tool calls that require user input, break the loop
+                        if any(fc.function.requires_user_input for fc in function_calls_to_run):
+                            break
 
-            # Save streaming responses to cache if enabled
-            if self.cache_response and cache_key and streaming_responses:
-                self._save_streaming_responses_to_cache(cache_key, streaming_responses)
+                        # Continue loop to get next response
+                        continue
+
+                    # No tool calls or finished processing them
+                    break
+
+                log_debug(f"{self.get_provider()} Async Response Stream End", center=True, symbol="-")
+
+                # Save streaming responses to cache if enabled
+                if self.cache_response and cache_key and streaming_responses:
+                    self._save_streaming_responses_to_cache(cache_key, streaming_responses)
 
         finally:
             # Close the Gemini client
@@ -1679,49 +1666,39 @@ class Model(ABC):
         function_call_output: str = ""
 
         if isinstance(function_execution_result.result, (GeneratorType, collections.abc.Iterator)):
-            for item in function_execution_result.result:
-                # This function yields agent/team/workflow run events
-                if (
-                    isinstance(item, tuple(get_args(RunOutputEvent)))
-                    or isinstance(item, tuple(get_args(TeamRunOutputEvent)))
-                    or isinstance(item, tuple(get_args(WorkflowRunOutputEvent)))
-                ):
-                    # We only capture content events for output accumulation
-                    if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
-                        # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
-                        agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
-                        if (
-                            function_call.function.agent_ids_to_return_content_for is None
-                            or agent_id in function_call.function.agent_ids_to_return_content_for
-                        ):
-                            if item.content is not None and isinstance(item.content, BaseModel):
-                                function_call_output += item.content.model_dump_json()
-                            else:
-                                # Capture output
-                                function_call_output += item.content or ""
+            try:
+                for item in function_execution_result.result:
+                    # This function yields agent/team/workflow run events
+                    if (
+                        isinstance(item, tuple(get_args(RunOutputEvent)))
+                        or isinstance(item, tuple(get_args(TeamRunOutputEvent)))
+                        or isinstance(item, tuple(get_args(WorkflowRunOutputEvent)))
+                    ):
+                        # We only capture content events for output accumulation
+                        if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
+                            # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
+                            agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
+                            if (
+                                function_call.function.agent_ids_to_return_content_for is None
+                                or agent_id in function_call.function.agent_ids_to_return_content_for
+                            ):
+                                if item.content is not None and isinstance(item.content, BaseModel):
+                                    function_call_output += item.content.model_dump_json()
+                                else:
+                                    # Capture output
+                                    function_call_output += item.content or ""
 
                         if function_call.function.show_result and item.content is not None:
-                            yield ModelResponse(content=item.content)
-
-                    if isinstance(item, CustomEvent):
-                        function_call_output += str(item)
-
-                    # For WorkflowCompletedEvent, extract content for final output
-                    from agno_v2.run.workflow import WorkflowCompletedEvent
-
-                    if isinstance(item, WorkflowCompletedEvent):
-                        if item.content is not None:
-                            if isinstance(item.content, BaseModel):                                function_call_output += item.content.model_dump_json()
-                            else:
-                                # Capture output
-                                function_call_output += item.content or ""
-
-                            if function_call.function.show_result and item.content is not None:
+                            try:
                                 yield ModelResponse(content=item.content)
+                            except Exception:
+                                pass
 
-                        if isinstance(item, CustomEvent):
-                            function_call_output += str(item)
+                    elif isinstance(item, CustomEvent):
+                        function_call_output += str(item)
+                        yield item
 
+                    else:
                         # For WorkflowCompletedEvent, extract content for final output
                         from agno_v2.run.workflow import WorkflowCompletedEvent
 
@@ -1731,14 +1708,11 @@ class Model(ABC):
                                     function_call_output += item.content.model_dump_json()
                                 else:
                                     function_call_output += str(item.content)
-
-                        # Yield the event itself to bubble it up
-                        yield item
-
-                    else:
-                        function_call_output += str(item)
-                        if function_call.function.show_result and item is not None:
-                            yield ModelResponse(content=str(item))
+                            yield item
+                        else:
+                            function_call_output += str(item)
+                            if function_call.function.show_result and item is not None:
+                                yield ModelResponse(content=str(item))
             except Exception as e:
                 log_error(f"Error while iterating function result generator for {function_call.function.name}: {e}")
                 function_call.error = str(e)
@@ -2244,30 +2218,35 @@ class Model(ABC):
                 function_call_output = async_function_call_output
                 # Events from async generators were already yielded in real-time above
             elif isinstance(function_call.result, (GeneratorType, collections.abc.Iterator)):
-                for item in function_call.result:
-                    # This function yields agent/team/workflow run events
-                    if isinstance(
-                        item,
-                        tuple(get_args(RunOutputEvent))
-                        + tuple(get_args(TeamRunOutputEvent))
-                        + tuple(get_args(WorkflowRunOutputEvent)),
-                    ):
-                        # We only capture content events
-                        if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
-                            # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
-                            agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
-                            if (
-                                function_call.function.agent_ids_to_return_content_for is None
-                                or agent_id in function_call.function.agent_ids_to_return_content_for
-                            ):                                if item.content is not None and isinstance(item.content, BaseModel):
-                                    function_call_output += item.content.model_dump_json()
-                                else:
-                                    # Capture output
-                                    function_call_output += item.content or ""
+                try:
+                    for item in function_call.result:
+                        # This function yields agent/team/workflow run events
+                        if isinstance(
+                            item,
+                            tuple(get_args(RunOutputEvent))
+                            + tuple(get_args(TeamRunOutputEvent))
+                            + tuple(get_args(WorkflowRunOutputEvent)),
+                        ):
+                            # We only capture content events
+                            if isinstance(item, RunContentEvent) or isinstance(item, TeamRunContentEvent):
+                                # Custom Andromeda360 Feature: Filter agent outputs based on agent_ids_to_return_content_for
+                                agent_id = getattr(item, "agent_id", None) or getattr(item, "team_id", None)
+                                if (
+                                    function_call.function.agent_ids_to_return_content_for is None
+                                    or agent_id in function_call.function.agent_ids_to_return_content_for
+                                ):
+                                    if item.content is not None and isinstance(item.content, BaseModel):
+                                        function_call_output += item.content.model_dump_json()
+                                    else:
+                                        # Capture output
+                                        function_call_output += item.content or ""
 
-                                if function_call.function.show_result and item.content is not None:
+                            if function_call.function.show_result and item.content is not None:
+                                try:
                                     yield ModelResponse(content=item.content)
-                                    continue
+                                except Exception:
+                                    pass
+                                continue
 
                             # Yield the event itself to bubble it up
                             yield item

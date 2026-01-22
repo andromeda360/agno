@@ -1,3 +1,4 @@
+from agno_v2.run.requirement import RunRequirement
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from time import time

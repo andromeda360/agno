@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from agno_v2.db.base import AsyncBaseDb, BaseDb
 from agno_v2.db.schemas import UserMemory
+from agno_v2.memory.strategies.types import MemoryOptimizationStrategy, MemoryOptimizationStrategyType
 from agno_v2.models.base import Model
 from agno_v2.models.message import Message
 from agno_v2.models.utils import get_model

@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from agno_v2.agent import Agent
 from agno_v2.db.base import SessionType
 from agno_v2.models.message import Message
-from agno_v2.os.config import ChatConfig, EvalsConfig, KnowledgeConfig, MemoryConfig, MetricsConfig, SessionConfig
+from agno_v2.os.config import ChatConfig, EvalsConfig, KnowledgeConfig, MemoryConfig, MetricsConfig, SessionConfig, TracesConfig
 from agno_v2.os.utils import (    extract_input_media,
     format_team_tools,
     format_tools,

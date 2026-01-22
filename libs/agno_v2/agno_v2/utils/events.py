@@ -1,3 +1,4 @@
+from agno_v2.run.requirement import RunRequirement
 from typing import Any, Dict, List, Optional, Union
 
 from agno_v2.media import Audio, Image

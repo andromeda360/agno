@@ -1,4 +1,5 @@
-from agno_v2.filters import FilterExpr
+from __future__ import annotations
+
 """Search filter expressions for filtering knowledge base documents and search results.
 
 This module provides a set of filter operators for constructing complex search queries
@@ -35,7 +36,6 @@ Example:
     ... )
 """
 
-from __future__ import annotations
 
 from typing import Any, List
 

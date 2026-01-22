@@ -1,3 +1,4 @@
+from agno_v2.run.requirement import RunRequirement
 """Tests for the RunRequirement class, used to handle HITL flows"""
 
 import pytest

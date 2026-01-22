@@ -10,6 +10,7 @@ from typing_extensions import TypeGuard
 
 from agno_v2.agent import Agent
 from agno_v2.media import Audio, Image, Video
+from agno_v2.models.message import Message
 from agno_v2.models.metrics import Metrics
 from agno_v2.run import RunContext
 from agno_v2.run.agent import RunCompletedEvent, RunContentEvent, RunOutput

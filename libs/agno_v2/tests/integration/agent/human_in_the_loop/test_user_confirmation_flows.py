@@ -1,3 +1,4 @@
+from agno_v2.run.requirement import RunRequirement
 import pytest
 
 from agno_v2.agent import Agent, RunOutput  # noqa

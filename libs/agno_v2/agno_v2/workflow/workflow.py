@@ -32,14 +32,8 @@ from agno_v2.models.message import Message
 from agno_v2.models.metrics import Metrics
 from agno_v2.run import RunContext, RunStatus
 from agno_v2.run.agent import RunContentEvent, RunEvent, RunOutput
-from agno_v2.run.cancel import (
-    cancel_run as cancel_run_global,
-)
-from agno_v2.run.cancel import (
-    cleanup_run,
-    raise_if_cancelled,
-    register_run,
-)
+from agno_v2.run.cancel import cancel_run as cancel_run_global
+from agno_v2.run.cancel import cleanup_run, raise_if_cancelled, register_run
 from agno_v2.run.team import RunContentEvent as TeamRunContentEvent
 from agno_v2.run.team import TeamRunEvent
 from agno_v2.run.workflow import (
@@ -51,10 +45,11 @@ from agno_v2.run.workflow import (
     WorkflowRunOutputEvent,
     WorkflowStartedEvent,
 )
-from agno_v2.session.workflow import WorkflowSession
+from agno_v2.session.workflow import WorkflowChatInteraction, WorkflowSession
 from agno_v2.team.team import Team
 from agno_v2.utils.common import is_typed_dict, validate_typed_dict
-from agno_v2.utils.log import (    log_debug,
+from agno_v2.utils.log import (
+    log_debug,
     log_error,
     log_warning,
     logger,
