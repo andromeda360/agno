@@ -7,7 +7,7 @@
 
 CURR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "${CURR_DIR}")"
-AGNO_DIR="${REPO_ROOT}/libs/agno"
+AGNO_DIR="${REPO_ROOT}/libs/agno_v2"
 AGNO_INFRA_DIR="${REPO_ROOT}/libs/agno_infra"
 source ${CURR_DIR}/_utils.sh
 

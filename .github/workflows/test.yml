@@ -25,7 +25,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: libs/agno
+        working-directory: libs/agno_v2
 
     steps:
       - uses: actions/checkout@v3
@@ -63,7 +63,7 @@ jobs:
           cache: "pip"
       - name: Install dependencies
         run: |
-          python -m pip install -e "../libs/agno/"[dev]
+          python -m pip install -e "../libs/agno_v2/"[dev]
       - name: Ruff check
         run: |
           ruff check .
@@ -130,5 +130,5 @@ jobs:
           AGNO_TELEMETRY: false
         run: |
           source .venv/bin/activate
-          python -m pytest --cov=agno --cov-report=json:coverage-agno.json ./libs/agno/tests/unit
+          python -m pytest --cov=agno_v2 --cov-report=json:coverage-agno.json ./libs/agno_v2/tests/unit
           echo "AGNO_COVERAGE=$(python -c 'import json; print(json.load(open("coverage-agno.json"))["totals"]["percent_covered_display"])')" >> $GITHUB_ENV
