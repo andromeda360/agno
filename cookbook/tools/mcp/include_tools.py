@@ -8,7 +8,7 @@ from agno.tools.mcp import MCPTools
 
 
 async def run_agent(message: str) -> None:
-    file_path = str(Path(__file__).parents[3] / "libs/agno")
+    file_path = str(Path(__file__).parents[3] / "libs/agno_v2")
 
     # Initialize the MCP server
     async with (

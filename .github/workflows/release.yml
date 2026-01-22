@@ -27,11 +27,11 @@ jobs:
 
       - name: Copy README
         run: |
-          cp README.md libs/agno/
+          cp README.md libs/agno_v2/
 
       - name: Build package
         run: |
-          cd libs/agno
+          cd libs/agno_v2
           python -m build
 
       - name: Publish to TestPyPI
@@ -40,14 +40,14 @@ jobs:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
-          packages-dir: libs/agno/dist
+          packages-dir: libs/agno_v2/dist
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages-dir: libs/agno/dist
+          packages-dir: libs/agno_v2/dist
 
   build-release-agno-infra:
     runs-on: ubuntu-latest

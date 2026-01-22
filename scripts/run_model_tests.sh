@@ -81,7 +81,7 @@ pip install \
     requests
 
 # Change to agno directory
-cd libs/agno
+cd libs/agno_v2
 
 case $MODEL_NAME in
     "openai")
