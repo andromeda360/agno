@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 from __future__ import annotations
 
 import warnings

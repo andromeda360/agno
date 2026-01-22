@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, Union

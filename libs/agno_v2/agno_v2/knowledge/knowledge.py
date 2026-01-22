@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 import asyncio
 import hashlib
 import io

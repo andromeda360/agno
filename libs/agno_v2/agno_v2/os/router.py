@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 import json
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Union, cast
 from uuid import uuid4

@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 import asyncio
 import time
 from datetime import timedelta

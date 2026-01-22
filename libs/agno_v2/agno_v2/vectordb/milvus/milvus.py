@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 import json
 from hashlib import md5
 from typing import Any, Dict, List, Optional, Union

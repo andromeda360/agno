@@ -3,6 +3,8 @@ import warnings
 from collections.abc import Set
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union, cast, get_args
 
+from agno_v2.filters import FilterExpr
+
 from pydantic import BaseModel
 from rich.console import Group
 from rich.json import JSON

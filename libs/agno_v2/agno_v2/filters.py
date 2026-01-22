@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 """Search filter expressions for filtering knowledge base documents and search results.
 
 This module provides a set of filter operators for constructing complex search queries

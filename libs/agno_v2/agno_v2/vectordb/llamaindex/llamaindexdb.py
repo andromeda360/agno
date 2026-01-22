@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from agno_v2.knowledge.document import Document

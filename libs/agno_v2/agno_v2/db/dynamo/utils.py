@@ -1,3 +1,4 @@
+from agno_v2.filters import FilterExpr
 import json
 import time
 from datetime import date, datetime, timedelta, timezone
