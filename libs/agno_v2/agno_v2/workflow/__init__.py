@@ -2,6 +2,7 @@ from agno_v2.workflow.agent import WorkflowAgent
 from agno_v2.workflow.condition import Condition
 from agno_v2.workflow.loop import Loop
 from agno_v2.workflow.parallel import Parallel
+from agno_v2.workflow.dynamic_parallel import DynamicParallel
 from agno_v2.workflow.router import Router
 from agno_v2.workflow.step import Step
 from agno_v2.workflow.steps import Steps
@@ -15,6 +16,7 @@ __all__ = [
     "Step",
     "Loop",
     "Parallel",
+    "DynamicParallel",
     "Condition",
     "Router",
     "WorkflowExecutionInput",

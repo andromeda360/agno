@@ -44,7 +44,7 @@ def log_message(
         _logger(f"Name: {message.name}")
     if message.tool_call_id:
         _logger(f"Tool call Id: {message.tool_call_id}")
-    if message.thinking:
+    if hasattr(message, "thinking") and message.thinking:
         _logger(f"<thinking>\n{message.thinking}\n</thinking>")
     if message.content:
         if isinstance(message.content, str) or isinstance(message.content, list):
