@@ -6,7 +6,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Type, Union
 from agno.exceptions import ModelProviderError, ModelRateLimitError
 from agno.models.message import Message
 from agno.utils.log import log_error, log_warning
-from agno.utils.models.aws_claude import format_messages
+from agno.utils.models.claude import format_messages
 from pydantic import BaseModel
 
 from agno_custom.models.anthropic.claude import Claude as AnthropicClaude
@@ -168,6 +168,7 @@ class Claude(AnthropicClaude):
     def invoke(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -205,6 +206,7 @@ class Claude(AnthropicClaude):
     def invoke_stream(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -257,6 +259,7 @@ class Claude(AnthropicClaude):
     async def ainvoke(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -294,6 +297,7 @@ class Claude(AnthropicClaude):
     async def ainvoke_stream(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,

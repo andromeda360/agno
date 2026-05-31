@@ -37,10 +37,9 @@ def log_message(
         _logger(f"Name: {message.name}")
     if message.tool_call_id:
         _logger(f"Tool call Id: {message.tool_call_id}")
-    # V2: Use getattr for optional thinking attribute
-    message_thinking = getattr(message, 'thinking', None)
-    if message_thinking:
-        _logger(f"<thinking>\n{message_thinking}\n</thinking>")
+    thinking = getattr(message, 'thinking', None) or getattr(message, 'reasoning_content', None)
+    if thinking:
+        _logger(f"<thinking>\n{thinking}\n</thinking>")
     if message.content:
         if isinstance(message.content, str) or isinstance(message.content, list):
             content = message.content
@@ -92,26 +91,27 @@ def log_message(
             token_metrics.append(f"output={message.metrics.output_tokens}")
         if message.metrics.total_tokens:
             token_metrics.append(f"total={message.metrics.total_tokens}")
-        if message.metrics.cached_tokens:
-            token_metrics.append(f"cached={message.metrics.cached_tokens}")
+        if message.metrics.cache_read_tokens:
+            token_metrics.append(f"cached={message.metrics.cache_read_tokens}")
         if message.metrics.reasoning_tokens:
             token_metrics.append(f"reasoning={message.metrics.reasoning_tokens}")
-        if message.metrics.audio_tokens:
-            token_metrics.append(f"audio={message.metrics.audio_tokens}")
+        if message.metrics.audio_total_tokens:
+            token_metrics.append(f"audio={message.metrics.audio_total_tokens}")
         if token_metrics:
             _logger(f"* Tokens:                      {', '.join(token_metrics)}")
-        if message.metrics.prompt_tokens_details:
+        if getattr(message.metrics, "prompt_tokens_details", None):
             _logger(f"* Prompt tokens details:       {message.metrics.prompt_tokens_details}")
-        if message.metrics.completion_tokens_details:
+        if getattr(message.metrics, "completion_tokens_details", None):
             _logger(f"* Completion tokens details:   {message.metrics.completion_tokens_details}")
-        if message.metrics.time is not None:
-            _logger(f"* Time:                        {message.metrics.time:.4f}s")
-        if message.metrics.output_tokens and message.metrics.time:
+        _metrics_time = getattr(message.metrics, 'duration', None) or getattr(message.metrics, 'time', None)
+        if _metrics_time is not None:
+            _logger(f"* Time:                        {_metrics_time:.4f}s")
+        if message.metrics.output_tokens and _metrics_time:
             _logger(
-                f"* Tokens per second:           {message.metrics.output_tokens / message.metrics.time:.4f} tokens/s"
+                f"* Tokens per second:           {message.metrics.output_tokens / _metrics_time:.4f} tokens/s"
             )
         if message.metrics.time_to_first_token is not None:
             _logger(f"* Time to first token:         {message.metrics.time_to_first_token:.4f}s")
-        if message.metrics.additional_metrics:
-            _logger(f"* Additional metrics:          {message.metrics.additional_metrics}")
+        if message.metrics.provider_metrics:
+            _logger(f"* Additional metrics:          {message.metrics.provider_metrics}")
         _logger(metrics_header, center=True, symbol="*")

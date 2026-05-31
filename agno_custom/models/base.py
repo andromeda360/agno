@@ -1,6 +1,6 @@
 import asyncio
 import collections.abc
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from types import AsyncGeneratorType, GeneratorType
 from typing import (
@@ -20,17 +20,19 @@ from typing import (
 from uuid import uuid4
 
 from agno.exceptions import AgentRunException
-from agno.media import AudioResponse, ImageArtifact, Audio, Video, File, Image
+from agno.media import Audio as AudioResponse
+from agno.media import Image as ImageArtifact
+from agno.models.base import Model as AgnoModel
 from agno.models.message import Citations, Message, MessageMetrics
 from agno.models.response import ModelResponse, ModelResponseEvent, ToolExecution
 from agno.utils.log import log_debug, log_error, log_warning
 from agno.utils.timer import Timer
 from pydantic import BaseModel
 
+from agno_custom.events.base import BaseBanavoStreamEvent
 from agno_custom.run.response import RunResponseContentEvent, RunResponseEvent
 from agno_custom.run.team import RunResponseContentEvent as TeamRunResponseContentEvent
 from agno_custom.run.team import TeamRunResponseEvent
-from agno_custom.events.base import BaseBanavoStreamEvent
 from agno_custom.tools import Function, FunctionCall, FunctionExecutionResult, UserInputField
 from agno_custom.utils.custom_message_logger import log_message
 from agno_custom.utils.functions import get_function_call_for_tool_call, get_function_call_for_tool_execution
@@ -41,9 +43,10 @@ from banavo.config import SETTINGS
 class MessageData:
     response_role: Optional[Literal["system", "user", "assistant", "tool"]] = None
     response_content: Any = ""
+    # Legacy fields (agno 1.x names used internally in our code)
     response_thinking: Any = ""
     response_redacted_thinking: Any = ""
-    # V2: Reasoning content fields
+    # agno 2.x renamed fields (used by installed agno _populate_stream_data)
     response_reasoning_content: Any = ""
     response_redacted_reasoning_content: Any = ""
     response_citations: Optional[Citations] = None
@@ -51,11 +54,11 @@ class MessageData:
 
     response_audio: Optional[AudioResponse] = None
     response_image: Optional[ImageArtifact] = None
-    # V2: Media output fields
-    response_video: Optional[Video] = None
-    response_file: Optional[File] = None
+    # agno 2.x additional media fields
+    response_video: Optional[Any] = None
+    response_file: Optional[Any] = None
 
-    # V2: Response metrics for tracking tokens and performance
+    # agno 2.x metrics field
     response_metrics: Optional[MessageMetrics] = None
 
     # Data from the provider that we might need on subsequent messages
@@ -95,7 +98,7 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
         if "completion_tokens" in response_usage and response_usage.get("completion_tokens") is not None:
             assistant_message.metrics.output_tokens = response_usage.get("completion_tokens", 0)
         if "cached_tokens" in response_usage and response_usage.get("cached_tokens") is not None:
-            assistant_message.metrics.cached_tokens = response_usage.get("cached_tokens", 0)
+            assistant_message.metrics.cache_read_tokens = response_usage.get("cached_tokens", 0)
         if "cache_write_tokens" in response_usage and response_usage.get("cache_write_tokens") is not None:
             assistant_message.metrics.cache_write_tokens = response_usage.get("cache_write_tokens", 0)
         if "total_tokens" in response_usage and response_usage.get("total_tokens") is not None:
@@ -118,7 +121,7 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
         if hasattr(response_usage, "total_tokens") and response_usage.total_tokens is not None:
             assistant_message.metrics.total_tokens = response_usage.total_tokens
         if hasattr(response_usage, "cached_tokens") and response_usage.cached_tokens is not None:
-            assistant_message.metrics.cached_tokens = response_usage.cached_tokens
+            assistant_message.metrics.cache_read_tokens = response_usage.cached_tokens
         if hasattr(response_usage, "cache_write_tokens") and response_usage.cache_write_tokens is not None:
             assistant_message.metrics.cache_write_tokens = response_usage.cache_write_tokens
 
@@ -135,7 +138,8 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
 
     # Additional metrics (e.g., from Groq, Ollama)
     if isinstance(response_usage, dict) and "additional_metrics" in response_usage:
-        assistant_message.metrics.additional_metrics = response_usage["additional_metrics"]
+        assistant_message.metrics.provider_metrics = assistant_message.metrics.provider_metrics or {}
+        assistant_message.metrics.provider_metrics["additional_metrics"] = response_usage["additional_metrics"]
 
     # Token details (e.g., from OpenAI)
     if hasattr(response_usage, "prompt_tokens_details"):
@@ -145,12 +149,12 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
                 "audio_tokens" in response_usage.prompt_tokens_details
                 and response_usage.prompt_tokens_details["audio_tokens"] is not None
             ):
-                assistant_message.metrics.input_audio_tokens = response_usage.prompt_tokens_details["audio_tokens"]
+                assistant_message.metrics.audio_input_tokens = response_usage.prompt_tokens_details["audio_tokens"]
             if (
                 "cached_tokens" in response_usage.prompt_tokens_details
                 and response_usage.prompt_tokens_details["cached_tokens"] is not None
             ):
-                assistant_message.metrics.cached_tokens = response_usage.prompt_tokens_details["cached_tokens"]
+                assistant_message.metrics.cache_read_tokens = response_usage.prompt_tokens_details["cached_tokens"]
         elif hasattr(response_usage.prompt_tokens_details, "model_dump"):
             assistant_message.metrics.prompt_tokens_details = response_usage.prompt_tokens_details.model_dump(
                 exclude_none=True
@@ -159,12 +163,12 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
                 hasattr(response_usage.prompt_tokens_details, "audio_tokens")
                 and response_usage.prompt_tokens_details.audio_tokens is not None
             ):
-                assistant_message.metrics.input_audio_tokens = response_usage.prompt_tokens_details.audio_tokens
+                assistant_message.metrics.audio_input_tokens = response_usage.prompt_tokens_details.audio_tokens
             if (
                 hasattr(response_usage.prompt_tokens_details, "cached_tokens")
                 and response_usage.prompt_tokens_details.cached_tokens is not None
             ):
-                assistant_message.metrics.cached_tokens = response_usage.prompt_tokens_details.cached_tokens
+                assistant_message.metrics.cache_read_tokens = response_usage.prompt_tokens_details.cached_tokens
 
     if hasattr(response_usage, "completion_tokens_details"):
         if isinstance(response_usage.completion_tokens_details, dict):
@@ -173,7 +177,7 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
                 "audio_tokens" in response_usage.completion_tokens_details
                 and response_usage.completion_tokens_details["audio_tokens"] is not None
             ):
-                assistant_message.metrics.output_audio_tokens = response_usage.completion_tokens_details["audio_tokens"]
+                assistant_message.metrics.audio_output_tokens = response_usage.completion_tokens_details["audio_tokens"]
             if (
                 "reasoning_tokens" in response_usage.completion_tokens_details
                 and response_usage.completion_tokens_details["reasoning_tokens"] is not None
@@ -189,15 +193,15 @@ def _add_usage_metrics_to_assistant_message(assistant_message: Message, response
                 hasattr(response_usage.completion_tokens_details, "audio_tokens")
                 and response_usage.completion_tokens_details.audio_tokens is not None
             ):
-                assistant_message.metrics.output_audio_tokens = response_usage.completion_tokens_details.audio_tokens
+                assistant_message.metrics.audio_output_tokens = response_usage.completion_tokens_details.audio_tokens
             if (
                 hasattr(response_usage.completion_tokens_details, "reasoning_tokens")
                 and response_usage.completion_tokens_details.reasoning_tokens is not None
             ):
                 assistant_message.metrics.reasoning_tokens = response_usage.completion_tokens_details.reasoning_tokens
 
-    assistant_message.metrics.audio_tokens = (
-        assistant_message.metrics.input_audio_tokens + assistant_message.metrics.output_audio_tokens
+    assistant_message.metrics.audio_total_tokens = (
+        assistant_message.metrics.audio_input_tokens + assistant_message.metrics.audio_output_tokens
     )
 
 
@@ -237,40 +241,8 @@ def _handle_agent_exception(a_exc: AgentRunException, additional_messages: Optio
 
 
 @dataclass
-class Model(ABC):
-    # ID of the model to use.
-    id: str
-    # Name for this Model. This is not sent to the Model API.
-    name: Optional[str] = None
-    # Provider for this Model. This is not sent to the Model API.
-    provider: Optional[str] = None
-
-    # -*- Do not set the following attributes directly -*-
-    # -*- Set them on the Agent instead -*-
-
-    # True if the Model supports structured outputs natively (e.g. OpenAI)
-    supports_native_structured_outputs: bool = False
-    # True if the Model requires a json_schema for structured outputs (e.g. LMStudio)
-    supports_json_schema_outputs: bool = False
-
-    # Controls which (if any) function is called by the model.
-    # "none" means the model will not call a function and instead generates a message.
-    # "auto" means the model can pick between generating a message or calling a function.
-    # Specifying a particular function via {"type: "function", "function": {"name": "my_function"}}
-    #   forces the model to call that function.
-    # "none" is the default when no functions are present. "auto" is the default if functions are present.
-    _tool_choice: Optional[Union[str, Dict[str, Any]]] = None
-
-    # System prompt from the model added to the Agent.
-    system_prompt: Optional[str] = None
-    # Instructions from the model added to the Agent.
-    instructions: Optional[List[str]] = None
-
-    # The role of the tool message.
-    tool_message_role: str = "tool"
-    # The role of the assistant message.
-    assistant_message_role: str = "assistant"
-    # Flag to enable/disable the logging of all in context messaged before beginning model execution loop
+class Model(AgnoModel):
+    # Flag to enable/disable the logging of all in context messages before beginning model execution loop
     log_messages: bool = True
 
     def __post_init__(self):
@@ -303,29 +275,17 @@ class Model(ABC):
 
     @abstractmethod
     def parse_provider_response(self, response: Any, **kwargs) -> ModelResponse:
-        """
-        Parse the raw response from the model provider into a ModelResponse.
-
-        Args:
-            response: Raw response from the model provider
-
-        Returns:
-            ModelResponse: Parsed response data
-        """
         pass
 
     @abstractmethod
     def parse_provider_response_delta(self, response: Any) -> ModelResponse:
-        """
-        Parse the streaming response from the model provider into ModelResponse objects.
-
-        Args:
-            response: Raw response chunk from the model provider
-
-        Returns:
-            ModelResponse: Parsed response delta
-        """
         pass
+
+    def _parse_provider_response(self, response: Any, **kwargs) -> ModelResponse:
+        return self.parse_provider_response(response, **kwargs)
+
+    def _parse_provider_response_delta(self, response: Any) -> ModelResponse:
+        return self.parse_provider_response_delta(response)
 
     def response(
         self,
@@ -563,6 +523,7 @@ class Model(ABC):
         assistant_message.metrics.start_timer()
         response = self.invoke(
             messages=messages,
+            assistant_message=assistant_message,
             response_format=response_format,
             tools=tools,
             tool_choice=tool_choice or self._tool_choice,
@@ -591,17 +552,16 @@ class Model(ABC):
                 model_response.content = assistant_message.get_content_string()
             else:
                 model_response.content += assistant_message.get_content_string()
-        # V2: Use setattr for optional attributes that may not exist on ModelResponse
-        if assistant_message.thinking is not None:
-            setattr(model_response, 'thinking', assistant_message.thinking)
-        if assistant_message.redacted_thinking is not None:
-            setattr(model_response, 'redacted_thinking', assistant_message.redacted_thinking)
+        if getattr(assistant_message, "reasoning_content", None) is not None:
+            model_response.reasoning_content = getattr(assistant_message, "reasoning_content", None)
+        if getattr(assistant_message, "redacted_reasoning_content", None) is not None:
+            model_response.redacted_reasoning_content = getattr(assistant_message, "redacted_reasoning_content", None)
         if assistant_message.citations is not None:
             model_response.citations = assistant_message.citations
         if assistant_message.audio_output is not None:
             model_response.audio = assistant_message.audio_output
         if assistant_message.image_output is not None:
-            setattr(model_response, 'image', assistant_message.image_output)
+            model_response.images = [assistant_message.image_output]
         if provider_response.extra is not None:
             if model_response.extra is None:
                 model_response.extra = {}
@@ -651,17 +611,16 @@ class Model(ABC):
                 model_response.content = assistant_message.get_content_string()
             else:
                 model_response.content += assistant_message.get_content_string()
-        # V2: Use setattr for optional attributes that may not exist on ModelResponse
-        if assistant_message.thinking is not None:
-            setattr(model_response, 'thinking', assistant_message.thinking)
-        if assistant_message.redacted_thinking is not None:
-            setattr(model_response, 'redacted_thinking', assistant_message.redacted_thinking)
+        if getattr(assistant_message, "reasoning_content", None) is not None:
+            model_response.reasoning_content = getattr(assistant_message, "reasoning_content", None)
+        if getattr(assistant_message, "redacted_reasoning_content", None) is not None:
+            model_response.redacted_reasoning_content = getattr(assistant_message, "redacted_reasoning_content", None)
         if assistant_message.citations is not None:
             model_response.citations = assistant_message.citations
         if assistant_message.audio_output is not None:
             model_response.audio = assistant_message.audio_output
         if assistant_message.image_output is not None:
-            setattr(model_response, 'image', assistant_message.image_output)
+            model_response.images = [assistant_message.image_output]
         if provider_response.extra is not None:
             if model_response.extra is None:
                 model_response.extra = {}
@@ -698,46 +657,14 @@ class Model(ABC):
         if provider_response.audio is not None:
             assistant_message.audio_output = provider_response.audio
 
-        # Add image to assistant message (V1: singular 'image', V2: plural 'images')
-        image = getattr(provider_response, 'image', None)
-        if image is None and hasattr(provider_response, 'images'):
-            images = getattr(provider_response, 'images', None)
-            if images and len(images) > 0:
-                image = images[-1]  # Take last image if multiple
-        if image is not None:
-            assistant_message.image_output = image
+        # Add image to assistant message
+        if provider_response.images:
+            assistant_message.image_output = provider_response.images[0]
 
-        # V2: Add video and file to assistant message (handle both singular and plural)
-        video = getattr(provider_response, 'video', None)
-        if video is None and hasattr(provider_response, 'videos'):
-            videos = getattr(provider_response, 'videos', None)
-            if videos and len(videos) > 0:
-                video = videos[-1]  # Take last video if multiple
-        if video is not None:
-            assistant_message.video_output = video
-
-        file_output = getattr(provider_response, 'file', None)
-        if file_output is None and hasattr(provider_response, 'files'):
-            files = getattr(provider_response, 'files', None)
-            if files and len(files) > 0:
-                file_output = files[-1]  # Take last file if multiple
-        if file_output is not None:
-            assistant_message.file_output = file_output
-
-        # Add thinking content to assistant message
-        if provider_response.thinking is not None:
-            assistant_message.thinking = provider_response.thinking
-
-        # Add redacted thinking content to assistant message
-        if provider_response.redacted_thinking is not None:
-            assistant_message.redacted_thinking = provider_response.redacted_thinking
-
-        # Add reasoning content to assistant message
+        # Add thinking/reasoning content to assistant message
         if provider_response.reasoning_content is not None:
             assistant_message.reasoning_content = provider_response.reasoning_content
-
-        # V2: Add redacted reasoning content to assistant message
-        if hasattr(provider_response, 'redacted_reasoning_content') and provider_response.redacted_reasoning_content is not None:
+        if provider_response.redacted_reasoning_content is not None:
             assistant_message.redacted_reasoning_content = provider_response.redacted_reasoning_content
 
         # Add provider data to assistant message
@@ -770,6 +697,7 @@ class Model(ABC):
         """
         for response_delta in self.invoke_stream(
             messages=messages,
+            assistant_message=assistant_message,
             response_format=response_format,
             tools=tools,
             tool_choice=tool_choice or self._tool_choice,
@@ -816,31 +744,21 @@ class Model(ABC):
             )
             assistant_message.metrics.stop_timer()
 
-            # Populate assistant message from stream data
+            # Populate assistant message from stream data (supports both agno 1.x and 2.x field names)
             if stream_data.response_content:
                 assistant_message.content = stream_data.response_content
-            if stream_data.response_thinking:
-                assistant_message.thinking = stream_data.response_thinking
-            if stream_data.response_redacted_thinking:
-                assistant_message.redacted_thinking = stream_data.response_redacted_thinking
-            # V2: Support reasoning_content and redacted_reasoning_content fields
-            if stream_data.response_reasoning_content:
-                assistant_message.reasoning_content = stream_data.response_reasoning_content
-            if stream_data.response_redacted_reasoning_content:
-                assistant_message.redacted_reasoning_content = stream_data.response_redacted_reasoning_content
+            _sd_thinking = stream_data.response_thinking or stream_data.response_reasoning_content
+            if _sd_thinking:
+                assistant_message.reasoning_content = _sd_thinking
+            _sd_redacted = stream_data.response_redacted_thinking or stream_data.response_redacted_reasoning_content
+            if _sd_redacted:
+                assistant_message.redacted_reasoning_content = _sd_redacted
             if stream_data.response_provider_data:
                 assistant_message.provider_data = stream_data.response_provider_data
             if stream_data.response_citations:
                 assistant_message.citations = stream_data.response_citations
             if stream_data.response_audio:
                 assistant_message.audio_output = stream_data.response_audio
-            # V2: Support image, video, and file output
-            if stream_data.response_image:
-                assistant_message.image_output = stream_data.response_image
-            if stream_data.response_video:
-                assistant_message.video_output = stream_data.response_video
-            if stream_data.response_file:
-                assistant_message.file_output = stream_data.response_file
             if stream_data.response_tool_calls and len(stream_data.response_tool_calls) > 0:
                 assistant_message.tool_calls = self.parse_tool_calls(stream_data.response_tool_calls)
 
@@ -964,29 +882,19 @@ class Model(ABC):
                 ):
                     yield response
 
-                # Populate assistant message from stream data
+                # Populate assistant message from stream data (supports both agno 1.x and 2.x field names)
                 if stream_data.response_content:
                     assistant_message.content = stream_data.response_content
-                if stream_data.response_thinking:
-                    assistant_message.thinking = stream_data.response_thinking
-                if stream_data.response_redacted_thinking:
-                    assistant_message.redacted_thinking = stream_data.response_redacted_thinking
-                # V2: Support reasoning_content and redacted_reasoning_content fields
-                if stream_data.response_reasoning_content:
-                    assistant_message.reasoning_content = stream_data.response_reasoning_content
-                if stream_data.response_redacted_reasoning_content:
-                    assistant_message.redacted_reasoning_content = stream_data.response_redacted_reasoning_content
+                _sd_thinking = stream_data.response_thinking or stream_data.response_reasoning_content
+                if _sd_thinking:
+                    assistant_message.reasoning_content = _sd_thinking
+                _sd_redacted = stream_data.response_redacted_thinking or stream_data.response_redacted_reasoning_content
+                if _sd_redacted:
+                    assistant_message.redacted_reasoning_content = _sd_redacted
                 if stream_data.response_provider_data:
                     assistant_message.provider_data = stream_data.response_provider_data
                 if stream_data.response_audio:
                     assistant_message.audio_output = stream_data.response_audio
-                # V2: Support image, video, and file output
-                if stream_data.response_image:
-                    assistant_message.image_output = stream_data.response_image
-                if stream_data.response_video:
-                    assistant_message.video_output = stream_data.response_video
-                if stream_data.response_file:
-                    assistant_message.file_output = stream_data.response_file
                 if stream_data.response_tool_calls and len(stream_data.response_tool_calls) > 0:
                     assistant_message.tool_calls = self.parse_tool_calls(stream_data.response_tool_calls)
 
@@ -1080,21 +988,12 @@ class Model(ABC):
             stream_data.response_content += model_response_delta.content
             should_yield = True
 
-        if model_response_delta.thinking is not None:
-            stream_data.response_thinking += model_response_delta.thinking
+        if getattr(model_response_delta, "reasoning_content", None) is not None:
+            stream_data.response_thinking += getattr(model_response_delta, "reasoning_content", None)
             should_yield = True
 
-        if model_response_delta.redacted_thinking is not None:
-            stream_data.response_redacted_thinking += model_response_delta.redacted_thinking
-            should_yield = True
-
-        # V2: Handle reasoning_content and redacted_reasoning_content
-        if hasattr(model_response_delta, 'reasoning_content') and model_response_delta.reasoning_content is not None:
-            stream_data.response_reasoning_content += model_response_delta.reasoning_content
-            should_yield = True
-
-        if hasattr(model_response_delta, 'redacted_reasoning_content') and model_response_delta.redacted_reasoning_content is not None:
-            stream_data.response_redacted_reasoning_content += model_response_delta.redacted_reasoning_content
+        if getattr(model_response_delta, "redacted_reasoning_content", None) is not None:
+            stream_data.response_redacted_thinking += getattr(model_response_delta, "redacted_reasoning_content", None)
             should_yield = True
 
         if model_response_delta.citations is not None:
@@ -1133,18 +1032,9 @@ class Model(ABC):
 
             should_yield = True
 
-        if model_response_delta.image:
+        if model_response_delta.images:
             if stream_data.response_image is None:
-                stream_data.response_image = model_response_delta.image
-
-        # V2: Handle video and file responses
-        if hasattr(model_response_delta, 'video') and model_response_delta.video:
-            if stream_data.response_video is None:
-                stream_data.response_video = model_response_delta.video
-
-        if hasattr(model_response_delta, 'file') and model_response_delta.file:
-            if stream_data.response_file is None:
-                stream_data.response_file = model_response_delta.file
+                stream_data.response_image = model_response_delta.images[0]
 
         if model_response_delta.extra is not None:
             if stream_data.extra is None:
@@ -1219,10 +1109,7 @@ class Model(ABC):
         """Create a function call result message."""
         kwargs = {}
         if timer is not None:
-            # V2: MessageMetrics doesn't accept 'time' parameter, set time after creation
-            metrics = MessageMetrics()
-            metrics.time = timer.elapsed
-            kwargs["metrics"] = metrics
+            kwargs["metrics"] = MessageMetrics(duration=timer.elapsed)
         return Message(
             role=self.tool_message_role,
             content=output if success else function_call.error,

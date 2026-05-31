@@ -3,13 +3,13 @@ from enum import Enum
 from time import time
 from typing import Any, Dict, List, Optional, Union
 
-from agno.media import AudioArtifact, AudioResponse, ImageArtifact, VideoArtifact
+from agno.media import Audio as AudioArtifact, Audio as AudioResponse, Image as ImageArtifact, Video as VideoArtifact
 from agno.models.message import Citations, Message
 from agno.models.response import ToolExecution
-from agno.run.base import BaseRunResponseEvent, RunResponseExtraData, RunStatus
+from agno.run.base import BaseRunOutputEvent, RunStatus
 from pydantic import BaseModel
 
-from agno_custom.run.response import RunEvent, RunResponse, RunResponseEvent, run_response_event_from_dict
+from agno_custom.run.response import RunEvent, RunResponse, RunResponseEvent, RunResponseExtraData, run_response_event_from_dict
 
 
 class TeamRunEvent(str, Enum):
@@ -36,7 +36,7 @@ class TeamRunEvent(str, Enum):
 
 
 @dataclass
-class BaseTeamRunResponseEvent(BaseRunResponseEvent):
+class BaseTeamRunResponseEvent(BaseRunOutputEvent):
     created_at: int = field(default_factory=lambda: int(time()))
     event: str = ""
     team_id: str = ""
@@ -50,7 +50,7 @@ class BaseTeamRunResponseEvent(BaseRunResponseEvent):
     content: Optional[Any] = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BaseTeamRunResponseEvent":
+    def from_dict(cls, data: Dict[str, Any]) -> "BaseTeamRunResponseEvent":  # type: ignore[override]
         member_responses = data.pop("member_responses", None)
         event = super().from_dict(data)
 

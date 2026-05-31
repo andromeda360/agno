@@ -28,21 +28,23 @@ from typing import (
 )
 from uuid import uuid4
 
-from agno.agent.metrics import SessionMetrics
+from agno.db.base import BaseDb as Storage
 from agno.exceptions import ModelProviderError, StopAgentRun
-from agno.knowledge.agent import AgentKnowledge
-from agno.media import Audio, AudioArtifact, AudioResponse, File, Image, ImageArtifact, Video, VideoArtifact
-from agno.memory.agent import AgentMemory, AgentRun
-from agno.memory.v2.memory import SessionSummary
-from agno.memory.v2.schema import UserMemory
+from agno.knowledge import Knowledge as AgentKnowledge
+from agno.media import Audio, File, Image, Video
+from agno.media import Audio as AudioArtifact
+from agno.media import Audio as AudioResponse
+from agno.media import Image as ImageArtifact
+from agno.media import Video as VideoArtifact
+from agno.memory import UserMemory
+from agno.metrics import SessionMetrics
 from agno.models.base import Model
 from agno.models.message import Citations, Message, MessageMetrics, MessageReferences
 from agno.models.response import ModelResponse, ModelResponseEvent, ToolExecution
 from agno.reasoning.step import NextAction, ReasoningStep, ReasoningSteps
-from agno.run.base import RunResponseExtraData, RunStatus
+from agno.run.base import RunStatus
 from agno.run.messages import RunMessages
-from agno.storage.base import Storage
-from agno.storage.session.agent import AgentSession
+from agno.session.agent import AgentSession, SessionSummary
 from agno.utils.log import (
     log_debug,
     log_error,
@@ -54,13 +56,25 @@ from agno.utils.log import (
 )
 from agno.utils.message import get_text_from_message
 from agno.utils.prompts import get_json_output_prompt, get_response_model_format_prompt
-from agno.utils.response import create_panel, create_paused_run_response_panel, escape_markdown_tags, format_tool_calls
+from agno.utils.response import create_panel, escape_markdown_tags, format_tool_calls
 from agno.utils.safe_formatter import SafeFormatter
 from agno.utils.string import parse_response_model_str
 from agno.utils.timer import Timer
 from pydantic import BaseModel
 
 from agno_custom.memory import Memory
+from agno_custom.run.response import RunResponseExtraData
+
+
+# Compatibility stubs — AgentMemory/AgentRun removed from agno 2.x; Banavo uses Memory instead
+class AgentMemory:
+    """Stub — agno.memory.agent.AgentMemory removed in agno 2.x."""
+    create_user_memories: bool = False
+
+class AgentRun:
+    """Stub — agno.memory.agent.AgentRun removed in agno 2.x."""
+    def __init__(self, response=None, **kwargs):
+        self.response = response
 from agno_custom.run.response import (
     RunEvent,
     RunResponse,
@@ -1424,6 +1438,9 @@ class Agent:
         if self.context is not None:
             self.resolve_run_context()
 
+        # Track caller's intent so we can return an async generator even when streaming is
+        # disabled internally (e.g. due to response_model being set).
+        _caller_wanted_stream = stream
         if self.response_model is not None and self.parse_response and stream is True:
             # Disable stream if response_model is set
             stream = False
@@ -1516,7 +1533,7 @@ class Agent:
                     )  # type: ignore[assignment]
                     return response_iterator
                 else:
-                    return await self._arun(
+                    final_run_response = await self._arun(
                         run_response=run_response,
                         run_messages=run_messages,
                         message=message,
@@ -1526,6 +1543,11 @@ class Agent:
                         response_format=response_format,
                         messages=messages,
                     )
+                    # If caller wanted streaming but we ran non-streaming (due to response_model),
+                    # wrap the RunResponse in an async generator so `async for` callers work correctly.
+                    if _caller_wanted_stream:
+                        return self._arun_response_wrapper(final_run_response)
+                    return final_run_response
             except ModelProviderError as e:
                 log_warning(f"Attempt {attempt + 1}/{num_attempts} failed: {str(e)}")
                 if isinstance(e, StopAgentRun):
@@ -2547,7 +2569,7 @@ class Agent:
                 tool_call_id=tool.tool_call_id,
                 tool_name=tool.tool_name,
                 tool_args=tool.tool_args,
-                metrics=MessageMetrics(),
+                metrics=MessageMetrics(duration=0),
             )
         )
 
@@ -2770,29 +2792,27 @@ class Agent:
             # Update the run_response content with the model response content
             run_response.content = model_response.content
 
-        # Update the run_response thinking with the model response thinking (V2: use getattr for optional attributes)
-        model_thinking = getattr(model_response, 'thinking', None)
-        if model_thinking is not None:
-            run_response.thinking = model_thinking
-        model_redacted_thinking = getattr(model_response, 'redacted_thinking', None)
-        if model_redacted_thinking is not None:
+        # Update the run_response thinking with the model response thinking (agno 2.x: reasoning_content)
+        _ag_thinking = getattr(model_response, 'reasoning_content', None) or getattr(model_response, 'thinking', None)
+        _ag_redacted = getattr(model_response, 'redacted_reasoning_content', None) or getattr(model_response, 'redacted_thinking', None)
+        if _ag_thinking is not None:
+            run_response.thinking = _ag_thinking
+        if _ag_redacted is not None:
             if run_response.thinking is None:
-                run_response.thinking = model_redacted_thinking
+                run_response.thinking = _ag_redacted
             else:
-                run_response.thinking += model_redacted_thinking
+                run_response.thinking += _ag_redacted
 
         # Update the run_response citations with the model response citations
-        model_citations = getattr(model_response, 'citations', None)
-        if model_citations is not None:
-            run_response.citations = model_citations
+        if model_response.citations is not None:
+            run_response.citations = model_response.citations
 
         # Update the run_response tools with the model response tool_executions
-        model_tool_executions = getattr(model_response, 'tool_executions', None)
-        if model_tool_executions is not None:
+        if model_response.tool_executions is not None:
             if run_response.tools is None:
-                run_response.tools = model_tool_executions
+                run_response.tools = model_response.tool_executions
             else:
-                run_response.tools.extend(model_tool_executions)
+                run_response.tools.extend(model_response.tool_executions)
 
             # For Reasoning/Thinking/Knowledge Tools update reasoning_content in RunResponse
             for tool_call in model_response.tool_executions:
@@ -2805,10 +2825,12 @@ class Agent:
         if model_response.audio is not None:
             run_response.response_audio = model_response.audio
 
-        # V2: Use getattr for optional image attribute
-        model_image = getattr(model_response, 'image', None)
-        if model_image is not None:
-            self.add_image(model_image)
+        _ag_image = getattr(model_response, 'image', None)
+        if _ag_image is None:
+            _ag_imgs = getattr(model_response, 'images', None)
+            _ag_image = _ag_imgs[0] if _ag_imgs else None
+        if _ag_image is not None:
+            self.add_image(_ag_image)
 
         # Update the run_response messages with the messages
         run_response.messages = run_messages.messages
@@ -3157,34 +3179,37 @@ class Agent:
                     model_response.content = (model_response.content or "") + model_response_event.content
                     run_response.content = model_response.content
 
-                # V2: Use getattr for optional thinking attributes
-                if getattr(model_response_event, 'thinking', None) is not None:
-                    current_thinking = getattr(model_response, 'thinking', '')
-                    setattr(model_response, 'thinking', (current_thinking or '') + model_response_event.thinking)
-                    run_response.thinking = getattr(model_response, 'thinking', None)
+                # agno 2.x renamed thinking → reasoning_content
+                _mre_thinking = getattr(model_response_event, 'reasoning_content', None) or getattr(model_response_event, 'thinking', None)
+                _mre_redacted = getattr(model_response_event, 'redacted_reasoning_content', None) or getattr(model_response_event, 'redacted_thinking', None)
 
-                if getattr(model_response_event, 'redacted_thinking', None) is not None:
-                    current_redacted = getattr(model_response, 'redacted_thinking', '')
-                    setattr(model_response, 'redacted_thinking', (current_redacted or '') + model_response_event.redacted_thinking)
-                    run_response.thinking = getattr(model_response, 'redacted_thinking', None)
+                if _mre_thinking is not None:
+                    _cur = getattr(model_response, 'reasoning_content', None) or getattr(model_response, 'thinking', None)
+                    model_response.reasoning_content = (_cur or "") + _mre_thinking
+                    run_response.thinking = model_response.reasoning_content
 
-                if getattr(model_response_event, 'citations', None) is not None:
+                if _mre_redacted is not None:
+                    _cur_r = getattr(model_response, 'redacted_reasoning_content', None) or getattr(model_response, 'redacted_thinking', None)
+                    model_response.redacted_reasoning_content = (_cur_r or "") + _mre_redacted
+                    run_response.thinking = model_response.redacted_reasoning_content
+
+                if model_response_event.citations is not None:
                     # We get citations in one chunk
                     run_response.citations = model_response_event.citations
 
                 # Only yield if we have content or thinking to show
                 if (
                     model_response_event.content is not None
-                    or getattr(model_response_event, 'thinking', None) is not None
-                    or getattr(model_response_event, 'redacted_thinking', None) is not None
-                    or getattr(model_response_event, 'citations', None) is not None
+                    or _mre_thinking is not None
+                    or _mre_redacted is not None
+                    or model_response_event.citations is not None
                 ):
                     yield create_run_response_content_event(
                         from_run_response=run_response,
                         content=model_response_event.content,
-                        thinking=getattr(model_response_event, 'thinking', None),
-                        redacted_thinking=getattr(model_response_event, 'redacted_thinking', None),
-                        citations=getattr(model_response_event, 'citations', None),
+                        thinking=_mre_thinking,
+                        redacted_thinking=_mre_redacted,
+                        citations=model_response_event.citations,
                     )
 
                 # Process audio
@@ -3220,14 +3245,16 @@ class Agent:
                         response_audio=run_response.response_audio,
                     )
 
-                # V2: Use getattr for optional image attribute
-                event_image = getattr(model_response_event, 'image', None)
-                if event_image is not None:
-                    self.add_image(event_image)
+                _mre_img = getattr(model_response_event, 'image', None)
+                if _mre_img is None:
+                    _mre_imgs = getattr(model_response_event, 'images', None)
+                    _mre_img = _mre_imgs[0] if _mre_imgs else None
+                if _mre_img is not None:
+                    self.add_image(_mre_img)
 
                     yield create_run_response_content_event(
                         from_run_response=run_response,
-                        image=event_image,
+                        image=_mre_img,
                     )
 
             # Handle tool interruption events
@@ -3317,6 +3344,17 @@ class Agent:
 
     async def _async_generator_wrapper(self, event: RunResponseEvent) -> AsyncIterator[RunResponseEvent]:
         yield event
+
+    async def _arun_response_wrapper(self, run_response: "RunResponse") -> AsyncIterator[RunResponseEvent]:
+        """Wrap a non-streaming RunResponse in an async generator.
+
+        Used when response_model forces stream=False but the caller passed stream=True.
+        Yields a content event followed by a completed event so `async for` consumers
+        (e.g. stream_agent_response) receive proper event objects instead of iterating
+        over a Pydantic model's fields.
+        """
+        yield create_run_response_content_event(from_run_response=run_response, content=run_response.content)
+        yield create_run_response_completed_event(from_run_response=run_response)
 
     def create_run_response(
         self,
@@ -3867,12 +3905,15 @@ class Agent:
         return AgentSession(
             session_id=session_id,
             agent_id=self.agent_id,
+            team_id=self.team_id,
             user_id=user_id,
-            team_session_id=self.team_session_id,
-            memory=memory_dict,
             agent_data=self.get_agent_data(),
             session_data=self.get_session_data(),
-            extra_data=self.extra_data,
+            metadata={
+                "banavo_team_session_id": self.team_session_id,
+                "banavo_memory": memory_dict,
+                "banavo_extra_data": self.extra_data,
+            },
             created_at=int(time()),
         )
 
@@ -3880,6 +3921,10 @@ class Agent:
         """Load the existing Agent from an AgentSession (from the database)"""
 
         from agno.utils.merge_dict import merge_dictionaries
+
+        metadata = session.metadata or {}
+        legacy_memory = getattr(session, "memory", None) or metadata.get("banavo_memory")
+        legacy_extra_data = getattr(session, "extra_data", None) or metadata.get("banavo_extra_data")
 
         # Get the agent_id, user_id and session_id from the database
         if self.agent_id is None and session.agent_id is not None:
@@ -3962,17 +4007,17 @@ class Agent:
                     self.audio.extend([AudioArtifact.model_validate(aud) for aud in audio_from_db])
 
         # Read extra_data from the database
-        if session.extra_data is not None:
+        if legacy_extra_data is not None:
             # If extra_data is set in the agent, update the database extra_data with the agent's extra_data
             if self.extra_data is not None:
                 # Updates agent_session.extra_data in place
-                merge_dictionaries(session.extra_data, self.extra_data)
+                merge_dictionaries(legacy_extra_data, self.extra_data)
             # Update the current extra_data with the extra_data from the database which is updated in place
-            self.extra_data = session.extra_data
+            self.extra_data = legacy_extra_data
 
         # If we haven't instantiated the memory yet, set it to the memory from the database
         if self.memory is None:
-            self.memory = session.memory  # type: ignore
+            self.memory = legacy_memory  # type: ignore
 
         if not (isinstance(self.memory, AgentMemory) or isinstance(self.memory, Memory)):
             # Is it a dict of `AgentMemory`?
@@ -3987,34 +4032,34 @@ class Agent:
             else:
                 raise TypeError(f"Expected memory to be a dict or AgentMemory, but got {type(self.memory)}")
 
-        if session.memory is not None:
+        if legacy_memory is not None:
             if isinstance(self.memory, AgentMemory):
                 try:
-                    if "runs" in session.memory:
+                    if "runs" in legacy_memory:
                         try:
                             self.memory.runs = []
-                            for run in session.memory["runs"]:
+                            for run in legacy_memory["runs"]:
                                 self.memory.runs.append(AgentRun.model_validate(run))
                         except Exception as e:
                             log_warning(f"Failed to load runs from memory: {e}")
-                    if "messages" in session.memory:
+                    if "messages" in legacy_memory:
                         try:
-                            self.memory.messages = [Message.model_validate(m) for m in session.memory["messages"]]
+                            self.memory.messages = [Message.model_validate(m) for m in legacy_memory["messages"]]
                         except Exception as e:
                             log_warning(f"Failed to load messages from memory: {e}")
-                    if "summary" in session.memory:
+                    if "summary" in legacy_memory:
                         from agno.memory.summary import SessionSummary
 
                         try:
-                            self.memory.summary = SessionSummary.model_validate(session.memory["summary"])
+                            self.memory.summary = SessionSummary.model_validate(legacy_memory["summary"])
                         except Exception as e:
                             log_warning(f"Failed to load session summary from memory: {e}")
-                    if "memories" in session.memory:
+                    if "memories" in legacy_memory:
                         from agno.memory.memory import Memory as AgentUserMemory
 
                         try:
                             self.memory.memories = [
-                                AgentUserMemory.model_validate(m) for m in session.memory["memories"]
+                                AgentUserMemory.model_validate(m) for m in legacy_memory["memories"]
                             ]
                         except Exception as e:
                             log_warning(f"Failed to load user memories: {e}")
@@ -4030,12 +4075,12 @@ class Agent:
                 except Exception as e:
                     log_warning(f"Failed to load AgentMemory: {e}")
             elif isinstance(self.memory, Memory):
-                if "runs" in session.memory:
+                if "runs" in legacy_memory:
                     try:
                         if self.memory.runs is None:
                             self.memory.runs = {}
                         self.memory.runs[session.session_id] = []
-                        for run in session.memory["runs"]:
+                        for run in legacy_memory["runs"]:
                             run_session_id = run["session_id"]
                             if "team_id" in run:
                                 self.memory.runs[run_session_id].append(TeamRunResponse.from_dict(run))
@@ -4043,8 +4088,8 @@ class Agent:
                                 self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
                     except Exception as e:
                         log_warning(f"Failed to load runs from memory: {e}")
-                if "memories" in session.memory:
-                    from agno.memory.v2.memory import UserMemory as UserMemoryV2
+                if "memories" in legacy_memory:
+                    from agno.memory import UserMemory as UserMemoryV2
 
                     try:
                         # If memories are already loaded, use them as is for the current session
@@ -4057,12 +4102,12 @@ class Agent:
                                     memory_id: UserMemoryV2.from_dict(memory)
                                     for memory_id, memory in user_memories.items()
                                 }
-                                for user_id, user_memories in session.memory["memories"].items()
+                                for user_id, user_memories in legacy_memory["memories"].items()
                             }
                     except Exception as e:
                         log_warning(f"Failed to load user memories: {e}")
-                if "summaries" in session.memory:
-                    from agno.memory.v2.memory import SessionSummary as SessionSummaryV2
+                if "summaries" in legacy_memory:
+                    from agno.session.agent import SessionSummary as SessionSummaryV2
 
                     try:
                         self.memory.summaries = {
@@ -4070,7 +4115,7 @@ class Agent:
                                 session_id: SessionSummaryV2.from_dict(summary)
                                 for session_id, summary in user_session_summaries.items()
                             }
-                            for user_id, user_session_summaries in session.memory["summaries"].items()
+                            for user_id, user_session_summaries in legacy_memory["summaries"].items()
                         }
                     except Exception as e:
                         log_warning(f"Failed to load session summaries: {e}")
@@ -5697,9 +5742,10 @@ class Agent:
         # Get the reasoning model
         reasoning_model: Optional[Model] = self.reasoning_model
         reasoning_model_provided = reasoning_model is not None
-        # V2: Don't deepcopy model - pass it directly
         if reasoning_model is None and self.model is not None:
-            reasoning_model = self.model
+            from copy import deepcopy
+
+            reasoning_model = deepcopy(self.model)
         if reasoning_model is None:
             log_warning("Reasoning error. Reasoning model is None, continuing regular session...")
             return
@@ -5906,9 +5952,10 @@ class Agent:
         # Get the reasoning model
         reasoning_model: Optional[Model] = self.reasoning_model
         reasoning_model_provided = reasoning_model is not None
-        # V2: Don't deepcopy model - pass it directly
         if reasoning_model is None and self.model is not None:
-            reasoning_model = self.model
+            from copy import deepcopy
+
+            reasoning_model = deepcopy(self.model)
         if reasoning_model is None:
             log_warning("Reasoning error. Reasoning model is None, continuing regular session...")
             return
@@ -6465,7 +6512,7 @@ class Agent:
             create_agent_session(
                 session=AgentSessionCreate(
                     session_id=agent_session.session_id,
-                    agent_data=agent_session.to_dict() if self.monitoring else agent_session.telemetry_data(),
+                    agent_data=agent_session.to_dict(),
                 ),
                 monitor=self.monitoring,
             )
@@ -6571,8 +6618,8 @@ class Agent:
                     run_id=self.run_id,
                     run_data=run_data,
                     session_id=agent_session.session_id,
-                    agent_data=agent_session.to_dict() if self.monitoring else agent_session.telemetry_data(),
-                    team_session_id=agent_session.team_session_id,
+                    agent_data=agent_session.to_dict(),
+                    team_session_id=(agent_session.metadata or {}).get("banavo_team_session_id"),
                 ),
                 monitor=self.monitoring,
             )
@@ -6598,8 +6645,8 @@ class Agent:
                     run_id=self.run_id,
                     run_data=run_data,
                     session_id=agent_session.session_id,
-                    agent_data=agent_session.to_dict() if self.monitoring else agent_session.telemetry_data(),
-                    team_session_id=agent_session.team_session_id,
+                    agent_data=agent_session.to_dict(),
+                    team_session_id=(agent_session.metadata or {}).get("banavo_team_session_id"),
                 ),
                 monitor=self.monitoring,
             )
@@ -7651,9 +7698,10 @@ class Agent:
             seen_message_pairs = set()
 
             for session in selected_sessions:
-                if isinstance(session, AgentSession) and session.memory:
+                legacy_memory = (session.metadata or {}).get("banavo_memory") if isinstance(session, AgentSession) else None
+                if isinstance(session, AgentSession) and legacy_memory:
                     message_count = 0
-                    for run in session.memory.get("runs", []):
+                    for run in legacy_memory.get("runs", []):
                         messages = run.get("messages", [])
                         for i in range(0, len(messages) - 1, 2):
                             if i + 1 < len(messages):

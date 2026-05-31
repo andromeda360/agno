@@ -3,12 +3,56 @@ from enum import Enum
 from time import time
 from typing import Any, Dict, List, Optional, Union
 
-from agno.media import AudioArtifact, AudioResponse, ImageArtifact, VideoArtifact
-from agno.models.message import Citations, Message
+from agno.media import Audio as AudioArtifact, Audio as AudioResponse, Image as ImageArtifact, Video as VideoArtifact
+from agno.models.message import Citations, Message, MessageReferences
 from agno.models.response import ToolExecution
-from agno.run.base import BaseRunResponseEvent, RunResponseExtraData, RunStatus
+from agno.reasoning.step import ReasoningStep
+from agno.run.base import BaseRunOutputEvent, RunStatus
 from agno.utils.log import logger
 from pydantic import BaseModel
+
+
+@dataclass
+class RunResponseExtraData:
+    """Preserved locally — removed from agno 2.x."""
+
+    references: Optional[List[MessageReferences]] = None
+    add_messages: Optional[List[Message]] = None
+    reasoning_steps: Optional[List[ReasoningStep]] = None
+    reasoning_messages: Optional[List[Message]] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        _dict: Dict[str, Any] = {}
+        if self.add_messages is not None:
+            _dict["add_messages"] = [m.to_dict() for m in self.add_messages]
+        if self.reasoning_messages is not None:
+            _dict["reasoning_messages"] = [m.to_dict() for m in self.reasoning_messages]
+        if self.reasoning_steps is not None:
+            _dict["reasoning_steps"] = [rs.model_dump() for rs in self.reasoning_steps]
+        if self.references is not None:
+            _dict["references"] = [r.model_dump() for r in self.references]
+        return _dict
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "RunResponseExtraData":
+        add_messages = data.pop("add_messages", None)
+        if add_messages is not None:
+            add_messages = [Message.model_validate(m) for m in add_messages]
+        reasoning_steps = data.pop("reasoning_steps", None)
+        if reasoning_steps is not None:
+            reasoning_steps = [ReasoningStep.model_validate(s) for s in reasoning_steps]
+        reasoning_messages = data.pop("reasoning_messages", None)
+        if reasoning_messages is not None:
+            reasoning_messages = [Message.model_validate(m) for m in reasoning_messages]
+        references = data.pop("references", None)
+        if references is not None:
+            references = [MessageReferences.model_validate(r) for r in references]
+        return cls(
+            add_messages=add_messages,
+            reasoning_steps=reasoning_steps,
+            reasoning_messages=reasoning_messages,
+            references=references,
+        )
 
 
 class RunEvent(str, Enum):
@@ -40,7 +84,7 @@ class RunEvent(str, Enum):
 
 
 @dataclass
-class BaseAgentRunResponseEvent(BaseRunResponseEvent):
+class BaseAgentRunResponseEvent(BaseRunOutputEvent):
     created_at: int = field(default_factory=lambda: int(time()))
     event: str = ""
     agent_id: str = ""
@@ -242,7 +286,7 @@ RUN_EVENT_TYPE_REGISTRY = {
 }
 
 
-def run_response_event_from_dict(data: dict) -> BaseRunResponseEvent:
+def run_response_event_from_dict(data: dict) -> BaseRunOutputEvent:
     event_type = data.get("event", "")
     cls = RUN_EVENT_TYPE_REGISTRY.get(event_type)
     if not cls:

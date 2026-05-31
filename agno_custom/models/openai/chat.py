@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import httpx
 from agno.exceptions import ModelProviderError
-from agno.media import AudioResponse
+from agno.media import Audio as AudioResponse
 from agno.models.message import Message
 from agno.models.response import ModelResponse
 from agno.utils.log import log_debug, log_error, log_warning
@@ -478,6 +478,7 @@ class OpenAIChat(Model):
     def invoke(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -496,6 +497,7 @@ class OpenAIChat(Model):
             if self._should_route_reasoning_through_responses_api():
                 return self._build_openai_responses_model().invoke(
                     messages=self._messages_for_openai_responses_api(messages),
+                    assistant_message=assistant_message or Message(role=self.assistant_message_role),
                     response_format=response_format,
                     tools=tools,
                     tool_choice=tool_choice,
@@ -556,19 +558,15 @@ class OpenAIChat(Model):
 
         Args:
             messages (List[Message]): A list of messages to send to the model.
-            assistant_message (Optional[Message]): The assistant message for V2 compatibility.
 
         Returns:
             ChatCompletion: The chat completion response from the API.
         """
         try:
             if self._should_route_reasoning_through_responses_api():
-                # V2: Create assistant_message if not provided
-                if assistant_message is None:
-                    assistant_message = Message(role=self.assistant_message_role)
                 return await self._build_openai_responses_model().ainvoke(
                     messages=self._messages_for_openai_responses_api(messages),
-                    assistant_message=assistant_message,
+                    assistant_message=assistant_message or Message(role=self.assistant_message_role),
                     response_format=response_format,
                     tools=tools,
                     tool_choice=tool_choice,
@@ -802,6 +800,7 @@ class OpenAIChat(Model):
     def invoke_stream(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -820,6 +819,7 @@ class OpenAIChat(Model):
             if self._should_route_reasoning_through_responses_api():
                 yield from self._build_openai_responses_model().invoke_stream(
                     messages=self._messages_for_openai_responses_api(messages),
+                    assistant_message=assistant_message or Message(role=self.assistant_message_role),
                     response_format=response_format,
                     tools=tools,
                     tool_choice=tool_choice,
@@ -883,7 +883,6 @@ class OpenAIChat(Model):
 
         Args:
             messages (List[Message]): A list of messages to send to the model.
-            assistant_message (Optional[Message]): The assistant message for V2 compatibility.
 
         Returns:
             Any: An asynchronous iterator of chat completion chunks.
@@ -891,12 +890,9 @@ class OpenAIChat(Model):
 
         try:
             if self._should_route_reasoning_through_responses_api():
-                # V2: Create assistant_message if not provided
-                if assistant_message is None:
-                    assistant_message = Message(role=self.assistant_message_role)
                 async for chunk in self._build_openai_responses_model().ainvoke_stream(
                     messages=self._messages_for_openai_responses_api(messages),
-                    assistant_message=assistant_message,
+                    assistant_message=assistant_message or Message(role=self.assistant_message_role),
                     response_format=response_format,
                     tools=tools,
                     tool_choice=tool_choice,
@@ -1062,13 +1058,12 @@ class OpenAIChat(Model):
 
     def parse_provider_response(
         self,
-        response: Union[ChatCompletion, Response],
+        response: Union[ChatCompletion, Response, ModelResponse],
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
     ) -> ModelResponse:
         """
         Parse the OpenAI response into a ModelResponse.
         """
-        # V2: If already a ModelResponse, return it directly
         if isinstance(response, ModelResponse):
             return response
 
@@ -1086,15 +1081,7 @@ class OpenAIChat(Model):
                 model_id=self.id,
             )
 
-        # Get response message - check if response has choices attribute
-        if not hasattr(response, "choices") or not response.choices:
-            log_error(f"Invalid response object: {type(response)}, expected ChatCompletion with choices")
-            raise ModelProviderError(
-                message="Invalid response format - missing choices",
-                model_name=self.name,
-                model_id=self.id,
-            )
-
+        # Get response message
         response_message = response.choices[0].message
 
         # Add role
@@ -1146,7 +1133,7 @@ class OpenAIChat(Model):
 
         return model_response
 
-    def parse_provider_response_delta(self, response_delta: ChatCompletionChunk) -> ModelResponse:
+    def parse_provider_response_delta(self, response_delta: Union[ChatCompletionChunk, ModelResponse]) -> ModelResponse:
         """
         Parse the OpenAI streaming response into a ModelResponse.
 
@@ -1156,6 +1143,9 @@ class OpenAIChat(Model):
         Returns:
             ModelResponse: Parsed response data
         """
+        if isinstance(response_delta, ModelResponse):
+            return response_delta
+
         model_response = ModelResponse()
         if response_delta.choices and len(response_delta.choices) > 0:
             delta: ChoiceDelta = response_delta.choices[0].delta

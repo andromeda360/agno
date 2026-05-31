@@ -27,21 +27,23 @@ from typing import (
 )
 from uuid import uuid4
 
-from agno.agent.metrics import SessionMetrics
+from agno.db.base import BaseDb as Storage
 from agno.exceptions import ModelProviderError, RunCancelledException
-from agno.knowledge.agent import AgentKnowledge
-from agno.media import Audio, AudioArtifact, AudioResponse, File, Image, ImageArtifact, Video, VideoArtifact
-from agno.memory.agent import AgentMemory
-from agno.memory.team import TeamMemory, TeamRun
-from agno.memory.v2.memory import SessionSummary
+from agno.knowledge import Knowledge as AgentKnowledge
+from agno.media import Audio, File, Image, Video
+from agno.media import Audio as AudioArtifact
+from agno.media import Audio as AudioResponse
+from agno.media import Image as ImageArtifact
+from agno.media import Video as VideoArtifact
+from agno.metrics import SessionMetrics
 from agno.models.base import Model
 from agno.models.message import Citations, Message, MessageReferences
 from agno.models.response import ModelResponse, ModelResponseEvent, ToolExecution
 from agno.reasoning.step import NextAction, ReasoningStep, ReasoningSteps
-from agno.run.base import RunResponseExtraData, RunStatus
+from agno.run.base import RunStatus
 from agno.run.messages import RunMessages
-from agno.storage.base import Storage
-from agno.storage.session.team import TeamSession
+from agno.session.agent import SessionSummary
+from agno.session.team import TeamSession
 from agno.utils.log import (
     log_debug,
     log_error,
@@ -59,7 +61,6 @@ from agno.utils.response import (
     create_panel,
     escape_markdown_tags,
     format_tool_calls,
-    update_run_response_with_reasoning,
 )
 from agno.utils.safe_formatter import SafeFormatter
 from agno.utils.string import is_valid_uuid, url_safe_string
@@ -68,7 +69,20 @@ from pydantic import BaseModel
 
 from agno_custom.agent import Agent
 from agno_custom.memory import Memory
-from agno_custom.run.response import RunResponse, RunResponseEvent
+from agno_custom.run.response import RunResponse, RunResponseEvent, RunResponseExtraData
+
+
+# Compatibility stubs — removed from agno 2.x
+class AgentMemory:
+    """Stub — agno.memory.agent.AgentMemory removed in agno 2.x."""
+    create_user_memories: bool = False
+
+class TeamMemory:
+    """Stub — agno.memory.team.TeamMemory removed in agno 2.x."""
+
+class TeamRun:
+    """Stub — agno.memory.team.TeamRun removed in agno 2.x."""
+from agno_custom.events.base import BaseBanavoStreamEvent
 from agno_custom.run.team import TeamRunEvent, TeamRunResponse, TeamRunResponseEvent, ToolCallCompletedEvent
 from agno_custom.tools import Function, Toolkit
 from agno_custom.utils.events import (
@@ -88,8 +102,22 @@ from agno_custom.utils.events import (
     create_team_tool_call_started_event,
 )
 from agno_custom.utils.string import parse_response_model_str
-from agno_custom.events.base import BaseBanavoStreamEvent
 from banavo.utils.token_counter import count_tokens
+
+
+def update_run_response_with_reasoning(run_response, reasoning_steps, reasoning_agent_messages):
+    """Preserved locally — removed from agno.utils.response in agno 2.x."""
+    from agno_custom.run.response import RunResponseExtraData
+    if run_response.extra_data is None:
+        run_response.extra_data = RunResponseExtraData()
+    if run_response.extra_data.reasoning_steps is None:
+        run_response.extra_data.reasoning_steps = reasoning_steps
+    else:
+        run_response.extra_data.reasoning_steps.extend(reasoning_steps)
+    if run_response.extra_data.reasoning_messages is None:
+        run_response.extra_data.reasoning_messages = reasoning_agent_messages
+    else:
+        run_response.extra_data.reasoning_messages.extend(reasoning_agent_messages)
 
 
 @dataclass(init=False)
@@ -1550,11 +1578,12 @@ class Team:
                 run_response.content += model_response.content
 
         # Update the run_response thinking with the model response thinking
-        if model_response.thinking is not None:
+        _mr_thinking = getattr(model_response, 'reasoning_content', None) or getattr(model_response, 'thinking', None)
+        if _mr_thinking is not None:
             if not run_response.thinking:
-                run_response.thinking = model_response.thinking
+                run_response.thinking = _mr_thinking
             else:
-                run_response.thinking += model_response.thinking
+                run_response.thinking += _mr_thinking
 
         # Update citations
         if model_response.citations is not None:
@@ -1760,8 +1789,9 @@ class Team:
         run_response.created_at = full_model_response.created_at
         if full_model_response.content is not None:
             run_response.content = full_model_response.content
-        if full_model_response.thinking is not None:
-            run_response.thinking = full_model_response.thinking
+        _fmr_thinking = getattr(full_model_response, 'reasoning_content', None) or getattr(full_model_response, 'thinking', None)
+        if _fmr_thinking is not None:
+            run_response.thinking = _fmr_thinking
         if full_model_response.audio is not None:
             run_response.response_audio = full_model_response.audio
         if full_model_response.citations is not None:
@@ -1844,8 +1874,9 @@ class Team:
         run_response.created_at = full_model_response.created_at
         if full_model_response.content is not None:
             run_response.content = full_model_response.content
-        if full_model_response.thinking is not None:
-            run_response.thinking = full_model_response.thinking
+        _fmr_thinking2 = getattr(full_model_response, 'reasoning_content', None) or getattr(full_model_response, 'thinking', None)
+        if _fmr_thinking2 is not None:
+            run_response.thinking = _fmr_thinking2
         if full_model_response.audio is not None:
             run_response.response_audio = full_model_response.audio
         if full_model_response.citations is not None:
@@ -1917,11 +1948,15 @@ class Team:
                         full_model_response.content = (full_model_response.content or "") + model_response_event.content
                     should_yield = True
 
-                # Process thinking
-                event_thinking = getattr(model_response_event, 'thinking', None)
-                if event_thinking is not None:
-                    current_thinking = getattr(full_model_response, 'thinking', None) or ''
-                    setattr(full_model_response, 'thinking', current_thinking + event_thinking)
+                # Process thinking (agno 2.x uses reasoning_content instead of thinking)
+                _mre_thinking = getattr(model_response_event, 'reasoning_content', None) or getattr(model_response_event, 'thinking', None)
+                _mre_redacted = getattr(model_response_event, 'redacted_reasoning_content', None) or getattr(model_response_event, 'redacted_thinking', None)
+                if _mre_thinking is not None:
+                    _fmr_cur = getattr(full_model_response, 'reasoning_content', None) or getattr(full_model_response, 'thinking', None)
+                    if not _fmr_cur:
+                        full_model_response.reasoning_content = _mre_thinking
+                    else:
+                        full_model_response.reasoning_content = _fmr_cur + _mre_thinking
                     should_yield = True
 
                 if model_response_event.citations is not None:
@@ -1952,11 +1987,13 @@ class Team:
                     # Yield the audio and transcript bit by bit
                     should_yield = True
 
-                # V2: Use getattr for optional image attribute
-                event_image = getattr(model_response_event, 'image', None)
-                if event_image is not None:
-                    self.add_image(event_image)
-
+                # agno 2.x uses 'images' list; fall back gracefully
+                _mre_image = getattr(model_response_event, 'image', None)
+                if _mre_image is None:
+                    _imgs = getattr(model_response_event, 'images', None)
+                    _mre_image = _imgs[0] if _imgs else None
+                if _mre_image is not None:
+                    self.add_image(_mre_image)
                     should_yield = True
 
                 # Only yield the chunk
@@ -1964,11 +2001,11 @@ class Team:
                     yield create_team_run_response_content_event(
                         from_run_response=run_response,
                         content=model_response_event.content,
-                        thinking=getattr(model_response_event, 'thinking', None),
-                        redacted_thinking=getattr(model_response_event, 'redacted_thinking', None),
+                        thinking=_mre_thinking,
+                        redacted_thinking=_mre_redacted,
                         response_audio=full_model_response.audio,
-                        citations=getattr(model_response_event, 'citations', None),
-                        image=getattr(model_response_event, 'image', None),
+                        citations=model_response_event.citations,
+                        image=_mre_image,
                     )
 
             # If the model response is a tool_call_started, add the tool call to the run_response
@@ -4209,9 +4246,10 @@ class Team:
         # Get the reasoning model
         reasoning_model: Optional[Model] = self.reasoning_model
         reasoning_model_provided = reasoning_model is not None
-        # V2: Don't deepcopy model - pass it directly
         if reasoning_model is None and self.model is not None:
-            reasoning_model = self.model
+            from copy import deepcopy
+
+            reasoning_model = deepcopy(self.model)
         if reasoning_model is None:
             log_warning("Reasoning error. Reasoning model is None, continuing regular session...")
             return
@@ -4421,9 +4459,10 @@ class Team:
         # Get the reasoning model
         reasoning_model: Optional[Model] = self.reasoning_model
         reasoning_model_provided = reasoning_model is not None
-        # V2: Don't deepcopy model - pass it directly
         if reasoning_model is None and self.model is not None:
-            reasoning_model = self.model
+            from copy import deepcopy
+
+            reasoning_model = deepcopy(self.model)
         if reasoning_model is None:
             log_warning("Reasoning error. Reasoning model is None, continuing regular session...")
             return
@@ -6805,6 +6844,10 @@ class Team:
         """Load the existing TeamSession from an TeamSession (from the database)"""
         from agno.utils.merge_dict import merge_dictionaries
 
+        metadata = session.metadata or {}
+        legacy_memory = getattr(session, "memory", None) or metadata.get("banavo_memory")
+        legacy_extra_data = getattr(session, "extra_data", None) or metadata.get("banavo_extra_data")
+
         # Get the team_id, user_id and session_id from the database
         if self.team_id is None and session.team_id is not None:
             self.team_id = session.team_id
@@ -6884,16 +6927,16 @@ class Team:
                     self.audio.extend([AudioArtifact.model_validate(aud) for aud in audio_from_db])
 
         # Read extra_data from the database
-        if session.extra_data is not None:
+        if legacy_extra_data is not None:
             # If extra_data is set in the agent, update the database extra_data with the agent's extra_data
             if self.extra_data is not None:
                 # Updates agent_session.extra_data in place
-                merge_dictionaries(session.extra_data, self.extra_data)
+                merge_dictionaries(legacy_extra_data, self.extra_data)
             # Update the current extra_data with the extra_data from the database which is updated in place
-            self.extra_data = session.extra_data
+            self.extra_data = legacy_extra_data
 
         if self.memory is None:
-            self.memory = session.memory  # type: ignore
+            self.memory = legacy_memory  # type: ignore
 
         if not (isinstance(self.memory, TeamMemory) or isinstance(self.memory, Memory)):
             # Is it a dict of `TeamMemory`?
@@ -6904,24 +6947,24 @@ class Team:
                 # Default to base memory
                 self.memory = Memory()
 
-        if session.memory is not None:
+        if legacy_memory is not None:
             if isinstance(self.memory, TeamMemory):
                 try:
-                    if "runs" in session.memory:
+                    if "runs" in legacy_memory:
                         try:
-                            self.memory.runs = [TeamRun.from_dict(m) for m in session.memory["runs"]]
+                            self.memory.runs = [TeamRun.from_dict(m) for m in legacy_memory["runs"]]
                         except Exception as e:
                             log_warning(f"Failed to load runs from memory: {e}")
-                    if "messages" in session.memory:
+                    if "messages" in legacy_memory:
                         try:
-                            self.memory.messages = [Message.model_validate(m) for m in session.memory["messages"]]
+                            self.memory.messages = [Message.model_validate(m) for m in legacy_memory["messages"]]
                         except Exception as e:
                             log_warning(f"Failed to load messages from memory: {e}")
-                    if "memories" in session.memory:
+                    if "memories" in legacy_memory:
                         from agno.memory.memory import Memory as UserMemoryV1
 
                         try:
-                            self.memory.memories = [UserMemoryV1.model_validate(m) for m in session.memory["memories"]]
+                            self.memory.memories = [UserMemoryV1.model_validate(m) for m in legacy_memory["memories"]]
                         except Exception as e:
                             log_warning(f"Failed to load user memories: {e}")
 
@@ -6938,37 +6981,37 @@ class Team:
                 except Exception as e:
                     log_warning(f"Failed to load TeamMemory: {e}")
             elif isinstance(self.memory, Memory):
-                if "runs" in session.memory:
+                if "runs" in legacy_memory:
                     try:
                         if self.memory.runs is None:
                             self.memory.runs = {}
                         self.memory.runs[session.session_id] = []
-                        for run in session.memory["runs"]:
+                        for run in legacy_memory["runs"]:
                             run_session_id = run["session_id"]
                             if "team_id" in run:
                                 self.memory.runs[run_session_id].append(TeamRunResponse.from_dict(run))
                             else:
                                 self.memory.runs[run_session_id].append(RunResponse.from_dict(run))
-                        log_debug(f"Loaded {len(session.memory['runs'])} runs from session storage into team memory")
+                        log_debug(f"Loaded {len(legacy_memory['runs'])} runs from session storage into team memory")
                     except Exception as e:
                         log_warning(f"Failed to load runs from memory: {e}")
-                if "team_context" in session.memory:
+                if "team_context" in legacy_memory:
                     # NOTE: bugfix - added support for loading TeamContext from member teams, only member agents was supported before:
                     from agno_custom.memory import TeamContext
 
                     try:
                         self.memory.team_context = {
                             session_id: TeamContext.from_dict(team_context)
-                            for session_id, team_context in session.memory["team_context"].items()
+                            for session_id, team_context in legacy_memory["team_context"].items()
                         }
                         log_debug(f"Loaded {len(self.memory.team_context.keys())} session into team memory")
                     except Exception as e:
                         log_warning(f"Failed to load team context: {e}")
-                if "memories" in session.memory:
+                if "memories" in legacy_memory:
                     if self.memory.memories is not None:
                         pass
                     else:
-                        from agno.memory.v2.memory import UserMemory as UserMemoryV2
+                        from agno.memory import UserMemory as UserMemoryV2
 
                         try:
                             self.memory.memories = {
@@ -6976,15 +7019,15 @@ class Team:
                                     memory_id: UserMemoryV2.from_dict(memory)
                                     for memory_id, memory in user_memories.items()
                                 }
-                                for user_id, user_memories in session.memory["memories"].items()
+                                for user_id, user_memories in legacy_memory["memories"].items()
                             }
                         except Exception as e:
                             log_warning(f"Failed to load user memories: {e}")
-                if "summaries" in session.memory:
+                if "summaries" in legacy_memory:
                     if self.memory.summaries is not None:
                         pass
                     else:
-                        from agno.memory.v2.memory import SessionSummary as SessionSummaryV2
+                        from agno.session.agent import SessionSummary as SessionSummaryV2
 
                         try:
                             self.memory.summaries = {
@@ -6992,7 +7035,7 @@ class Team:
                                     session_id: SessionSummaryV2.from_dict(summary)
                                     for session_id, summary in user_session_summaries.items()
                                 }
-                                for user_id, user_session_summaries in session.memory["summaries"].items()
+                                for user_id, user_session_summaries in legacy_memory["summaries"].items()
                             }
                         except Exception as e:
                             log_warning(f"Failed to load session summaries: {e}")
@@ -7650,11 +7693,13 @@ class Team:
             session_id=session_id,
             team_id=self.team_id,
             user_id=user_id,
-            team_session_id=self.team_session_id,
-            memory=memory_dict,
             team_data=self._get_team_data(),
             session_data=self._get_session_data(),
-            extra_data=self.extra_data,
+            metadata={
+                "banavo_team_session_id": self.team_session_id,
+                "banavo_memory": memory_dict,
+                "banavo_extra_data": self.extra_data,
+            },
             created_at=int(time()),
         )
 
@@ -7674,9 +7719,9 @@ class Team:
                 run=TeamRunCreate(
                     run_id=self.run_id,  # type: ignore
                     run_data=run_data,
-                    team_session_id=team_session.team_session_id,
+                    team_session_id=(team_session.metadata or {}).get("banavo_team_session_id"),
                     session_id=team_session.session_id,
-                    team_data=team_session.to_dict() if self.monitoring else team_session.telemetry_data(),
+                    team_data=team_session.to_dict(),
                 ),
                 monitor=self.monitoring,
             )
@@ -7700,7 +7745,7 @@ class Team:
                     run_id=self.run_id,
                     run_data=run_data,
                     session_id=team_session.session_id,
-                    team_data=team_session.to_dict() if self.monitoring else team_session.telemetry_data(),
+                    team_data=team_session.to_dict(),
                 ),
                 monitor=self.monitoring,
             )
@@ -7720,7 +7765,7 @@ class Team:
             upsert_team_session(
                 session=TeamSessionCreate(
                     session_id=team_session.session_id,
-                    team_data=team_session.to_dict() if self.monitoring else team_session.telemetry_data(),
+                    team_data=team_session.to_dict(),
                 ),
                 monitor=self.monitoring,
             )

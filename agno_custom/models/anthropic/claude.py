@@ -297,6 +297,7 @@ class Claude(Model):
     def invoke(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -339,6 +340,7 @@ class Claude(Model):
     def invoke_stream(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -400,6 +402,7 @@ class Claude(Model):
     async def ainvoke(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -442,6 +445,7 @@ class Claude(Model):
     async def ainvoke_stream(
         self,
         messages: List[Message],
+        assistant_message: Optional[Message] = None,
         response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
@@ -568,12 +572,12 @@ class Claude(Model):
                                     )
                                 )
                 elif block.type == "thinking":
-                    setattr(model_response, 'thinking', block.thinking)
+                    model_response.reasoning_content = block.thinking
                     model_response.provider_data = {
                         "signature": block.signature,
                     }
                 elif block.type == "redacted_thinking":
-                    setattr(model_response, 'redacted_thinking', block.data)
+                    model_response.redacted_reasoning_content = block.data
 
         # Extract tool calls from the response
         if response.stop_reason == "tool_use":
@@ -628,7 +632,7 @@ class Claude(Model):
         model_response = ModelResponse()
         if isinstance(response, ContentBlockStartEvent):
             if response.content_block.type == "redacted_thinking":
-                model_response.redacted_thinking = response.content_block.data
+                model_response.redacted_reasoning_content = response.content_block.data
 
         if isinstance(response, ContentBlockDeltaEvent):
             # Handle text content
@@ -636,7 +640,7 @@ class Claude(Model):
                 model_response.content = response.delta.text
             # Handle thinking content
             elif response.delta.type == "thinking_delta":
-                setattr(model_response, 'thinking', response.delta.thinking)
+                model_response.reasoning_content = response.delta.thinking
             elif response.delta.type == "signature_delta":
                 model_response.provider_data = {
                     "signature": response.delta.signature,

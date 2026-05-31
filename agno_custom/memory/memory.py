@@ -1,15 +1,15 @@
 import json
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime
 from os import getenv
 from typing import Any, Dict, List, Literal, Optional, Type, Union
 
-from agno_custom.media import AudioArtifact, ImageArtifact, VideoArtifact
-from agno_custom.memory.v2.db.base import MemoryDb
-from agno_custom.memory.v2.db.schema import MemoryRow
-from agno_custom.memory.v2.manager import MemoryManager
-from agno_custom.memory.v2.schema import SessionSummary, UserMemory
-from agno_custom.memory.v2.summarizer import SessionSummarizer
+from agno.media import Audio as AudioArtifact, Image as ImageArtifact, Video as VideoArtifact
+from agno.db.base import BaseDb as MemoryDb
+from agno.memory import MemoryManager, UserMemory
+from agno.session.agent import SessionSummary
+from agno.session.summary import SessionSummaryManager as SessionSummarizer
 from agno.models.base import Model
 from agno.models.message import Message
 from agno.utils.log import log_debug, log_warning, logger, set_log_level_to_debug, set_log_level_to_info
@@ -143,49 +143,30 @@ class Memory:
         # We are making memories
         if self.model is not None:
             if self.memory_manager is None:
-                self.memory_manager = MemoryManager(model=self.model)
+                self.memory_manager = MemoryManager(model=deepcopy(self.model))
             # Set the model on the memory manager if it is not set
             if self.memory_manager.model is None:
-                self.memory_manager.model = self.model
+                self.memory_manager.model = deepcopy(self.model)
 
-        # V2: SessionSummarizer is abstract, skip instantiation
-        # Session summaries are handled differently in V2, summary_manager stays None
+        # We are making session summaries
+        if self.model is not None:
+            if self.summary_manager is None:
+                self.summary_manager = SessionSummarizer(model=deepcopy(self.model))
+            # Set the model on the summary_manager if it is not set
+            elif self.summary_manager.model is None:
+                self.summary_manager.model = deepcopy(self.model)
 
         self.debug_mode = debug_mode
 
     def set_model(self, model: Model) -> None:
-        # V2: Convert model to proper string format with provider prefix
-        # V2 MemoryManager expects model to be: 'provider:model_id' or Model instance or None
-        model_to_use = None
-        if model is not None:
-            # If model is a Model instance, construct proper string format
-            if hasattr(model, '__class__'):
-                model_class_name = model.__class__.__name__
-                model_id = getattr(model, 'id', str(model))
-
-                # Determine provider from model class
-                if 'OpenAI' in model_class_name:
-                    model_to_use = f"openai:{model_id}"
-                elif 'Anthropic' in model_class_name or 'Claude' in model_class_name:
-                    model_to_use = f"anthropic:{model_id}"
-                elif 'Gemini' in model_class_name or 'Google' in model_class_name:
-                    model_to_use = f"google:{model_id}"
-                else:
-                    # If already in correct format, use as-is; otherwise try to use model_id
-                    if ':' in model_id:
-                        model_to_use = model_id
-                    else:
-                        # Fallback: use model object directly and let V2 handle it
-                        model_to_use = model
-            else:
-                model_to_use = model
-
         if self.memory_manager is None:
-            self.memory_manager = MemoryManager(model=model_to_use)
+            self.memory_manager = MemoryManager(model=deepcopy(model))
         if self.memory_manager.model is None:
-            self.memory_manager.model = model_to_use
-        # V2: SessionSummarizer is abstract, don't instantiate it
-        # Session summarization is handled differently in V2
+            self.memory_manager.model = deepcopy(model)
+        if self.summary_manager is None:
+            self.summary_manager = SessionSummarizer(model=deepcopy(model))
+        if self.summary_manager.model is None:
+            self.summary_manager.model = deepcopy(model)
 
     def get_model(self) -> Model:
         if self.model is None:
@@ -202,16 +183,11 @@ class Memory:
 
     def refresh_from_db(self, user_id: Optional[str] = None):
         if self.db:
-            # If no user_id is provided, read all memories
-            if user_id is None:
-                all_memories = self.db.read_memories()
-            else:
-                all_memories = self.db.read_memories(user_id=user_id)
-            # Reset the memories
+            all_memories = self.db.get_user_memories(user_id=user_id)
             self.memories = {}
             for memory in all_memories:
-                if memory.user_id is not None and memory.id is not None:
-                    self.memories.setdefault(memory.user_id, {})[memory.id] = UserMemory.from_dict(memory.memory)
+                if memory.user_id is not None and memory.memory_id is not None:
+                    self.memories.setdefault(memory.user_id, {})[memory.memory_id] = memory
 
     def set_log_level(self):
         if self.debug_mode or getenv("AGNO_DEBUG", "false").lower() == "true":
@@ -321,19 +297,14 @@ class Memory:
         if refresh_from_db:
             self.refresh_from_db(user_id=user_id)
 
-        if not memory.last_updated:
-            memory.last_updated = datetime.now()
+        if not memory.updated_at:
+            memory.updated_at = datetime.now()
 
+        memory.memory_id = memory_id
+        memory.user_id = user_id
         self.memories.setdefault(user_id, {})[memory_id] = memory  # type: ignore
         if self.db:
-            self._upsert_db_memory(
-                memory=MemoryRow(
-                    id=memory_id,
-                    user_id=user_id,
-                    memory=memory.to_dict(),
-                    last_updated=memory.last_updated or datetime.now(),
-                )
-            )
+            self._upsert_db_memory(memory=memory)
 
         return memory_id
 
@@ -360,23 +331,18 @@ class Memory:
         if refresh_from_db:
             self.refresh_from_db(user_id=user_id)
 
-        if not memory.last_updated:
-            memory.last_updated = datetime.now()
+        if not memory.updated_at:
+            memory.updated_at = datetime.now()
 
         if memory_id not in self.memories[user_id]:  # type: ignore
             log_warning(f"Memory {memory_id} not found for user {user_id}")
             return None
 
+        memory.memory_id = memory_id
+        memory.user_id = user_id
         self.memories.setdefault(user_id, {})[memory_id] = memory  # type: ignore
         if self.db:
-            self._upsert_db_memory(
-                memory=MemoryRow(
-                    id=memory_id,
-                    user_id=user_id,
-                    memory=memory.to_dict(),
-                    last_updated=memory.last_updated or datetime.now(),
-                )
-            )
+            self._upsert_db_memory(memory=memory)
 
         return memory_id
 
@@ -423,7 +389,6 @@ class Memory:
     # -*- Agent Functions
     def create_session_summary(self, session_id: str, user_id: Optional[str] = None) -> Optional[SessionSummary]:
         """Creates a summary of the session"""
-
         if not self.summary_manager:
             raise ValueError("Summarizer not initialized")
 
@@ -432,14 +397,18 @@ class Memory:
         if user_id is None:
             user_id = "default"
 
-        summary_response = self.summary_manager.run(conversation=self.get_messages_for_session(session_id=session_id))
-        if summary_response is None:
+        from agno.session.agent import AgentSession
+
+        # Build a minimal AgentSession so SessionSummaryManager can prepare messages
+        _session = AgentSession(session_id=session_id, runs=[])
+        _session.runs = self.get_runs(session_id=session_id)  # type: ignore
+        summary_obj = self.summary_manager.create_session_summary(session=_session)
+        if summary_obj is None:
             return None
         session_summary = SessionSummary(
-            summary=summary_response.summary, topics=summary_response.topics, last_updated=datetime.now()
+            summary=summary_obj.summary, topics=summary_obj.topics, updated_at=datetime.now()
         )
         self.summaries.setdefault(user_id, {})[session_id] = session_summary  # type: ignore
-
         return session_summary
 
     async def acreate_session_summary(self, session_id: str, user_id: Optional[str] = None) -> Optional[SessionSummary]:
@@ -452,13 +421,15 @@ class Memory:
         if user_id is None:
             user_id = "default"
 
-        summary_response = await self.summary_manager.arun(
-            conversation=self.get_messages_for_session(session_id=session_id)
-        )
-        if summary_response is None:
+        from agno.session.agent import AgentSession
+
+        _session = AgentSession(session_id=session_id, runs=[])
+        _session.runs = self.get_runs(session_id=session_id)  # type: ignore
+        summary_obj = await self.summary_manager.acreate_session_summary(session=_session)
+        if summary_obj is None:
             return None
         session_summary = SessionSummary(
-            summary=summary_response.summary, topics=summary_response.topics, last_updated=datetime.now()
+            summary=summary_obj.summary, topics=summary_obj.topics, updated_at=datetime.now()
         )
         self.summaries.setdefault(user_id, {})[session_id] = session_summary  # type: ignore
         return session_summary
@@ -629,12 +600,12 @@ class Memory:
         return response
 
     # -*- DB Functions
-    def _upsert_db_memory(self, memory: MemoryRow) -> str:
+    def _upsert_db_memory(self, memory: UserMemory) -> str:
         """Use this function to add a memory to the database."""
         try:
             if not self.db:
                 raise ValueError("Memory db not initialized")
-            self.db.upsert_memory(memory)
+            self.db.upsert_user_memory(memory)
             return "Memory added successfully"
         except Exception as e:
             logger.warning(f"Error storing memory in db: {e}")
@@ -645,7 +616,7 @@ class Memory:
         try:
             if not self.db:
                 raise ValueError("Memory db not initialized")
-            self.db.delete_memory(memory_id=memory_id)
+            self.db.delete_user_memory(memory_id=memory_id)
             return "Memory deleted successfully"
         except Exception as e:
             logger.warning(f"Error deleting memory in db: {e}")
