@@ -4151,10 +4151,11 @@ class Agent:
             Optional[AgentSession]: The saved AgentSession or None if not saved.
         """
         if self.storage is not None:
-            self.agent_session = cast(
-                AgentSession,
-                self.storage.upsert(session=self.get_agent_session(session_id=session_id, user_id=user_id)),
-            )
+            # V2: Use update() instead of upsert(), pass session data via kwargs
+            session = self.get_agent_session(session_id=session_id, user_id=user_id)
+            # to_dict() includes session_id and user_id, so just unpack it
+            self.storage.update(**session.to_dict())
+            self.agent_session = session
         return self.agent_session
 
     def add_introduction(self, introduction: str) -> None:

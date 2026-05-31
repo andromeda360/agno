@@ -6814,9 +6814,11 @@ class Team:
             Optional[TeamSession]: The saved TeamSession or None if not saved.
         """
         if self.storage is not None:
-            self.team_session = cast(
-                TeamSession, self.storage.upsert(session=self._get_team_session(session_id=session_id, user_id=user_id))
-            )
+            # V2: Use update() instead of upsert(), pass session data via kwargs
+            session = self._get_team_session(session_id=session_id, user_id=user_id)
+            # to_dict() includes session_id and user_id, so just unpack it
+            self.storage.update(**session.to_dict())
+            self.team_session = session
         return self.team_session
 
     def rename_session(self, session_name: str, session_id: Optional[str] = None) -> None:
