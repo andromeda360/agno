@@ -865,10 +865,11 @@ class GeminiInteractions(Model):
                                     model_response.reasoning_content = text
                                 else:
                                     model_response.reasoning_content += text
-                if step.signature:
+                step_signature = getattr(step, "signature", None)
+                if step_signature:
                     if model_response.provider_data is None:
                         model_response.provider_data = {}
-                    model_response.provider_data["thought_signature"] = step.signature
+                    model_response.provider_data["thought_signature"] = step_signature
 
             elif isinstance(step, _CALL_STEP_TYPES) and self.agent is not None:
                 # Agent path: every call/result pair is already executed by the
@@ -922,8 +923,10 @@ class GeminiInteractions(Model):
                         "arguments": args_str,
                     },
                 }
-                if step.signature:
-                    tool_call["thought_signature"] = step.signature
+                # FunctionCallStep dropped the `signature` field in google-genai 2.9.0.
+                step_signature = getattr(step, "signature", None)
+                if step_signature:
+                    tool_call["thought_signature"] = step_signature
                 model_response.tool_calls.append(tool_call)
 
         # Parse usage metrics
@@ -1093,8 +1096,10 @@ class GeminiInteractions(Model):
                         "arguments": "",
                     },
                 }
-                if step.signature:
-                    tool_call["thought_signature"] = step.signature
+                # FunctionCallStep dropped the `signature` field in google-genai 2.9.0.
+                step_signature = getattr(step, "signature", None)
+                if step_signature:
+                    tool_call["thought_signature"] = step_signature
                 args = step.arguments
                 args_buffer = json.dumps(args) if isinstance(args, dict) and args else ""
                 stream_state["pending_calls"][idx] = {"tool_call": tool_call, "args_buffer": args_buffer}
