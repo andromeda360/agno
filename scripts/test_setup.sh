@@ -36,8 +36,8 @@ VIRTUAL_ENV=${VENV_DIR} uv pip install -U -e "${AGNO_DIR}[tests]"
 VIRTUAL_ENV=${VENV_DIR} uv pip install brave-search
 
 print_heading "Pinning test dependency versions for CI compatibility"
-# scipy>=1.18 requires numpy>=2; agno[tests] can resolve to numpy 1.x otherwise.
-VIRTUAL_ENV=${VENV_DIR} uv pip install "numpy>=2.0,<2.8" "google-genai>=2.0.0"
+# scipy>=1.18 requires numpy>=2; google-genai>=2.9 needs pydantic>=2.12.
+VIRTUAL_ENV=${VENV_DIR} uv pip install "numpy>=2.0,<2.8" "google-genai>=2.0.0" "pydantic>=2.12"
 
 print_heading "Installing agno-infra"
 print_info "VIRTUAL_ENV=${VENV_DIR} uv pip install -r ${AGNO_INFRA_DIR}/requirements.txt"
