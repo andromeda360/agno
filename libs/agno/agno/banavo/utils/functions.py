@@ -204,7 +204,6 @@ def get_function_call_for_tool_call(
     return None
 
 
-import json
 import re
 from typing import Optional, Type
 

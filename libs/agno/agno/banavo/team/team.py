@@ -4,7 +4,6 @@ import threading
 from collections import ChainMap, defaultdict, deque
 from dataclasses import asdict, dataclass, replace
 from os import getenv
-from textwrap import dedent
 from time import sleep, time
 from typing import (
     Any,
@@ -40,11 +39,10 @@ from agno.models.base import Model
 from agno.models.message import Citations, Message, MessageReferences
 
 import agno.banavo.message_persistence  # noqa: F401 — persist Message.provider_data in session storage
-from agno.models.response import ModelResponse, ModelResponseEvent, ToolExecution
+from agno.models.response import ModelResponse, ToolExecution
 from agno.reasoning.step import NextAction, ReasoningStep, ReasoningSteps
 from agno.run.base import RunStatus
 from agno.run.messages import RunMessages
-from agno.session.agent import SessionSummary
 from agno.session.team import TeamSession
 from agno.utils.log import (
     log_debug,
@@ -90,7 +88,6 @@ class TeamRun:
     """Stub — agno.memory.team.TeamRun removed in agno 2.x."""
 
 
-from agno.banavo.events.stream_events import BaseBanavoStreamEvent
 from agno.banavo.run.team import TeamRunEvent, TeamRunResponse, TeamRunResponseEvent, ToolCallCompletedEvent
 from agno.banavo.tools import Function, Toolkit
 from agno.banavo.utils.events import (
@@ -106,10 +103,7 @@ from agno.banavo.utils.events import (
     create_team_run_response_content_event,
     create_team_run_response_error_event,
     create_team_run_response_started_event,
-    create_team_tool_call_completed_event,
-    create_team_tool_call_started_event,
 )
-from agno.banavo.utils.functions import parse_response_model_str
 from banavo.utils.token_counter import count_tokens
 
 

@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from agno.models.fallback import FallbackConfig
 from agno.run.team import (
     FollowupsCompletedEvent,
@@ -22,8 +24,13 @@ from agno.team.factory import TeamFactory
 from agno.team.mode import TeamMode
 from agno.team.remote import RemoteTeam
 from agno.team.task import Task, TaskList, TaskStatus
-from agno.banavo.team.team import Team, TeamMemory
 from agno.team.team import get_team_by_id, get_teams
+
+if TYPE_CHECKING:
+    from agno.banavo.team.team import TeamMemory
+    from agno.team.team import Team
+else:
+    from agno.banavo.team.team import Team, TeamMemory
 
 __all__ = [
     "FallbackConfig",

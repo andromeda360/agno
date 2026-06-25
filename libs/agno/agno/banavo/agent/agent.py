@@ -19,11 +19,9 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Set,
     Type,
     Union,
     cast,
-    get_args,
     overload,
 )
 from uuid import uuid4
@@ -33,10 +31,8 @@ from agno.exceptions import ModelProviderError, StopAgentRun
 from agno.knowledge import Knowledge as AgentKnowledge
 from agno.media import Audio, File, Image, Video
 from agno.media import Audio as AudioArtifact
-from agno.media import Audio as AudioResponse
 from agno.media import Image as ImageArtifact
 from agno.media import Video as VideoArtifact
-from agno.memory import UserMemory
 from agno.metrics import SessionMetrics
 from agno.models.base import Model
 from agno.models.message import Citations, Message, MessageMetrics, MessageReferences
@@ -44,7 +40,7 @@ from agno.models.response import ModelResponse, ModelResponseEvent, ToolExecutio
 from agno.reasoning.step import NextAction, ReasoningStep, ReasoningSteps
 from agno.run.base import RunStatus
 from agno.run.messages import RunMessages
-from agno.session.agent import AgentSession, SessionSummary
+from agno.session.agent import AgentSession
 from agno.utils.log import (
     log_debug,
     log_error,
@@ -54,11 +50,7 @@ from agno.utils.log import (
     set_log_level_to_debug,
     set_log_level_to_info,
 )
-from agno.utils.message import get_text_from_message
-from agno.utils.prompts import get_json_output_prompt, get_response_model_format_prompt
-from agno.utils.response import create_panel, escape_markdown_tags, format_tool_calls
 from agno.utils.safe_formatter import SafeFormatter
-from agno.utils.string import parse_response_model_str
 from agno.utils.timer import Timer
 from pydantic import BaseModel
 
@@ -84,9 +76,8 @@ class AgentRun:
 from agno.banavo.run.response import (
     RunResponse,
     RunResponseEvent,
-    RunResponsePausedEvent,
 )
-from agno.banavo.run.team import TeamRunResponse, TeamRunResponseEvent
+from agno.banavo.run.team import TeamRunResponse
 from agno.banavo.tools import Function, Toolkit
 from agno.banavo.utils.events import (
     create_memory_update_completed_event,

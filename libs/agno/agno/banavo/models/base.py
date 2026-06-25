@@ -35,7 +35,6 @@ from agno.banavo.run.team import RunResponseContentEvent as TeamRunResponseConte
 from agno.banavo.run.team import TeamRunResponseEvent
 from agno.banavo.tools import Function, FunctionCall, FunctionExecutionResult, UserInputField
 from agno.banavo.utils.functions import get_function_call_for_tool_call, get_function_call_for_tool_execution
-from banavo.config import SETTINGS
 
 
 @dataclass
