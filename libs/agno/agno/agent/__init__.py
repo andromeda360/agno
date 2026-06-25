@@ -1,11 +1,5 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from agno.agent.agent import Agent
-else:
-    from agno.banavo.agent.agent import Agent
-
 from agno.agent.agent import (
+    Agent,
     AgentSession,
     Function,
     Message,

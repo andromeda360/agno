@@ -104,7 +104,7 @@ from agno.banavo.utils.events import (
     create_team_run_response_error_event,
     create_team_run_response_started_event,
 )
-from banavo.utils.token_counter import count_tokens
+from agno.banavo.utils.token_counter import count_tokens
 
 
 def update_run_response_with_reasoning(run_response, reasoning_steps, reasoning_agent_messages):

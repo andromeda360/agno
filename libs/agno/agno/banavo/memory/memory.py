@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 from agno.media import Audio as AudioArtifact, Image as ImageArtifact, Video as VideoArtifact
 from agno.db.base import BaseDb as MemoryDb
-from agno.memory import MemoryManager, UserMemory
+from agno.memory.manager import MemoryManager, UserMemory
 from agno.session.agent import SessionSummary
 from agno.session.summary import SessionSummaryManager as SessionSummarizer
 from agno.models.base import Model
@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from agno.banavo.run.response import RunResponse
 from agno.banavo.run.team import TeamRunResponse
-from banavo.utils.token_counter import count_tokens
+from agno.banavo.utils.token_counter import count_tokens
 
 
 class MemorySearchResponse(BaseModel):
