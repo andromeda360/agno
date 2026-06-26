@@ -128,6 +128,10 @@ def __init__(
     num_history_runs: Optional[int] = None,
     num_history_messages: Optional[int] = None,
     max_tool_calls_from_history: Optional[int] = None,
+    max_tokens_from_history: Optional[int] = None,
+    include_session_state_in_response: bool = False,
+    max_interactions_to_share: Optional[int] = None,
+    disable_built_in_transfer_tools: bool = False,
     skills: Optional[Skills] = None,
     tools: Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], Callable[..., List]]] = None,
     tool_call_limit: Optional[int] = None,
@@ -248,6 +252,10 @@ def __init__(
         team.num_history_runs = 3
 
     team.max_tool_calls_from_history = max_tool_calls_from_history
+    team.max_tokens_from_history = max_tokens_from_history
+    team.include_session_state_in_response = include_session_state_in_response
+    team.max_interactions_to_share = max_interactions_to_share
+    team.disable_built_in_transfer_tools = disable_built_in_transfer_tools
 
     team.add_team_history_to_members = add_team_history_to_members
     team.num_team_history_runs = num_team_history_runs
@@ -500,11 +508,30 @@ def _initialize_member(team: "Team", member: Union["Team", Agent], debug_mode: O
             member.model = team.model
             log_info(f"Agent '{member.name or member.id}' inheriting model from Team: {team.model.id}")
 
+        if team.session_state is not None:
+            if member.session_state is None:
+                member.session_state = team.session_state
+            else:
+                from agno.utils.merge_dict import merge_dictionaries
+
+                merge_dictionaries(member.session_state, team.session_state)
+
+        log_debug(f"Initializing member with team session state: {member.team_session_state}")
+
     elif isinstance(member, Team):
         member.parent_team_id = team.id
         member.set_id()
         # Initialize the sub-team's model first so it has its model set
         member._set_default_model()
+
+        if team.session_state is not None:
+            if member.session_state is None:
+                member.session_state = team.session_state
+            else:
+                from agno.utils.merge_dict import merge_dictionaries
+
+                merge_dictionaries(member.session_state, team.session_state)
+
         # Then let the sub-team initialize its own members so they inherit from the sub-team
         # Only iterate if members is a static list (not a callable factory)
         if isinstance(member.members, list):

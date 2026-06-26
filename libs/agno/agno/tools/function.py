@@ -155,6 +155,8 @@ class Function(BaseModel):
     skip_entrypoint_processing: bool = False
     # If True, the function call will show the result along with sending it to the model.
     show_result: bool = False
+    # If set, only return content for these agent ids when running as a team tool
+    agent_ids_to_return_content_for: Optional[List[str]] = None
     # If True, the agent will stop after the function call.
     stop_after_tool_call: bool = False
     # Hook that runs before the function is executed.

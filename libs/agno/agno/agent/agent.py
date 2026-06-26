@@ -10,6 +10,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -138,6 +139,12 @@ class Agent:
     num_history_messages: Optional[int] = None
     # Maximum number of tool calls to include from history (None = no limit)
     max_tool_calls_from_history: Optional[int] = None
+    # Maximum number of tokens to include from history (None = use num_history_runs)
+    max_tokens_from_history: Optional[int] = None
+    # If True, append public session state to the run response content
+    include_session_state_in_response: bool = False
+    # Deprecated memory field kept for backward compatibility
+    memory: Optional[Any] = None
 
     # --- Knowledge ---
     knowledge: Optional[Union[KnowledgeProtocol, Callable[..., KnowledgeProtocol]]] = None
@@ -411,6 +418,9 @@ class Agent:
         num_history_runs: Optional[int] = None,
         num_history_messages: Optional[int] = None,
         max_tool_calls_from_history: Optional[int] = None,
+        max_tokens_from_history: Optional[int] = None,
+        include_session_state_in_response: bool = False,
+        memory: Optional[Any] = None,
         store_media: bool = True,
         store_tool_messages: bool = True,
         store_history_messages: bool = False,
@@ -563,6 +573,9 @@ class Agent:
             self.num_history_runs = 3
 
         self.max_tool_calls_from_history = max_tool_calls_from_history
+        self.max_tokens_from_history = max_tokens_from_history
+        self.include_session_state_in_response = include_session_state_in_response
+        self.memory = memory
 
         self.store_media = store_media
         self.store_tool_messages = store_tool_messages
@@ -688,6 +701,7 @@ class Agent:
         self._team: Optional[Any] = None
 
         self._formatter: Optional[SafeFormatter] = None
+        self._run_response: Optional[RunOutput] = None
 
         self._hooks_normalised = False
 
@@ -732,6 +746,24 @@ class Agent:
         ):
             _init.set_learning_machine(self)
         return self._learning
+
+    @property
+    def agent_id(self) -> Optional[str]:
+        return self.id
+
+    @property
+    def team_session_state(self) -> Optional[Dict[str, Any]]:
+        return self.session_state
+
+    @team_session_state.setter
+    def team_session_state(self, value: Optional[Dict[str, Any]]) -> None:
+        self.session_state = value
+
+    @property
+    def run_response(self) -> Optional[RunOutput]:
+        if self._run_response is not None:
+            return self._run_response
+        return self.get_last_run_output()
 
     # ---------------------------------------------------------------
     # _init module delegates
@@ -991,8 +1023,9 @@ class Agent:
     async def aget_session_name(self, session_id: Optional[str] = None) -> str:
         return await _session.aget_session_name(self, session_id=session_id)
 
-    def get_session_state(self, session_id: Optional[str] = None) -> Dict[str, Any]:
-        return _session.get_session_state(self, session_id=session_id)
+    def get_session_state(self) -> Dict[str, Any]:
+        """Public portion of the session state (empty dict if unset)."""
+        return self.session_state.get("public", None) if self.session_state else {}
 
     async def aget_session_state(self, session_id: Optional[str] = None) -> Dict[str, Any]:
         return await _session.aget_session_state(self, session_id=session_id)
@@ -1647,6 +1680,39 @@ class Agent:
             background=background,
             **kwargs,
         )
+
+
+    def add_to_session_state(
+        self,
+        artifact_name: str,
+        key: str,
+        value: Mapping[str, Any],
+        is_private: bool = False,
+    ) -> None:
+        """Store *value* under self.session_state[<namespace>][artifact_name][key]."""
+        from agno.utils.log import log_debug
+
+        namespace = "private" if is_private else "public"
+
+        self.session_state = self.session_state or {}
+        (self.session_state.setdefault(namespace, {}).setdefault(artifact_name, {}))[key] = value
+
+        log_debug(f"Updated agent session state with namespace={namespace} artifact={artifact_name} key={key}")
+
+    def add_to_history_doc_to_session_state(
+        self,
+        artifact_name: str,
+        value: Mapping[str, Any],
+        is_private: bool = True,
+    ) -> None:
+        """Store *value* under self.session_state[<namespace>][artifact_name] list."""
+        from agno.utils.log import log_debug
+
+        namespace = "private" if is_private else "public"
+        self.session_state = self.session_state or {}
+        self.session_state.setdefault(namespace, {}).setdefault(artifact_name, []).append(value)
+
+        log_debug(f"Updated agent session state with namespace={namespace} artifact={artifact_name}")
 
 
 # ---------------------------------------------------------------

@@ -10,6 +10,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -330,6 +331,14 @@ class Team:
     num_history_messages: Optional[int] = None
     # Maximum number of tool calls to include from history (None = no limit)
     max_tool_calls_from_history: Optional[int] = None
+    # Maximum number of tokens to include from history (None = use num_history_runs)
+    max_tokens_from_history: Optional[int] = None
+    # If True, append public session state to the run response content
+    include_session_state_in_response: bool = False
+    # Maximum member interactions to share with the team context
+    max_interactions_to_share: Optional[int] = None
+    # If True, disable built-in transfer tools for member delegation
+    disable_built_in_transfer_tools: bool = False
 
     # --- Team Storage ---
     # Metadata stored with this team
@@ -494,6 +503,10 @@ class Team:
         num_history_runs: Optional[int] = None,
         num_history_messages: Optional[int] = None,
         max_tool_calls_from_history: Optional[int] = None,
+        max_tokens_from_history: Optional[int] = None,
+        include_session_state_in_response: bool = False,
+        max_interactions_to_share: Optional[int] = None,
+        disable_built_in_transfer_tools: bool = False,
         skills: Optional[Skills] = None,
         tools: Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], Callable[..., List]]] = None,
         tool_call_limit: Optional[int] = None,
@@ -616,6 +629,10 @@ class Team:
             num_history_runs=num_history_runs,
             num_history_messages=num_history_messages,
             max_tool_calls_from_history=max_tool_calls_from_history,
+            max_tokens_from_history=max_tokens_from_history,
+            include_session_state_in_response=include_session_state_in_response,
+            max_interactions_to_share=max_interactions_to_share,
+            disable_built_in_transfer_tools=disable_built_in_transfer_tools,
             skills=skills,
             tools=tools,
             tool_call_limit=tool_call_limit,
@@ -675,6 +692,21 @@ class Team:
         # Component metadata (set by get_teams during DB loading)
         self._version: Optional[int] = None
         self._stage: Optional[str] = None
+        self._run_response: Optional[TeamRunOutput] = None
+
+    @property
+    def team_session_state(self) -> Optional[Dict[str, Any]]:
+        return self.session_state
+
+    @team_session_state.setter
+    def team_session_state(self, value: Optional[Dict[str, Any]]) -> None:
+        self.session_state = value
+
+    @property
+    def run_response(self) -> Optional[TeamRunOutput]:
+        if self._run_response is not None:
+            return self._run_response
+        return self.get_last_run_output()
 
     @property
     def background_executor(self) -> Any:
@@ -1582,8 +1614,9 @@ class Team:
     async def aget_session_name(self, session_id: Optional[str] = None) -> str:
         return await _session.aget_session_name(self, session_id=session_id)
 
-    def get_session_state(self, session_id: Optional[str] = None) -> Dict[str, Any]:
-        return _session.get_session_state(self, session_id=session_id)
+    def get_session_state(self) -> Dict[str, Any]:
+        """Public portion of the session state (empty dict if unset)."""
+        return self.session_state.get("public", None) if self.session_state else {}
 
     async def aget_session_state(self, session_id: Optional[str] = None) -> Dict[str, Any]:
         return await _session.aget_session_state(self, session_id=session_id)
@@ -1713,6 +1746,61 @@ class Team:
 
     def deep_copy(self, *, update: Optional[Dict[str, Any]] = None) -> "Team":
         return _utils.deep_copy(self, update=update)
+
+    def add_to_session_state(
+        self,
+        artifact_name: str,
+        key: str,
+        value: Mapping[str, Any],
+        is_private: bool = False,
+    ) -> None:
+        """Store *value* under self.session_state[<namespace>][artifact_name][key]."""
+        from agno.utils.log import log_debug
+
+        namespace = "private" if is_private else "public"
+
+        self.session_state = self.session_state or {}
+        (self.session_state.setdefault(namespace, {}).setdefault(artifact_name, {}))[key] = value
+
+        log_debug(f"Updated team session state with namespace={namespace} artifact={artifact_name} key={key}")
+
+    def add_agent_state_to_session_state(
+        self,
+        member_name: str,
+        member_agent_public_session_state: Mapping[str, Any],
+        member_agent_response: Union[str, BaseModel],
+        calling_args: Mapping[str, str],
+    ) -> None:
+        """Store member agent state under self.session_state['public'][member_name]."""
+        from agno.utils.log import log_debug
+
+        if isinstance(member_agent_response, BaseModel):
+            member_agent_response = member_agent_response.model_dump(mode="json")
+
+        self.session_state = self.session_state or {}
+        (self.session_state.setdefault("public", {}).setdefault(member_name, [])).append(
+            {
+                "agent_state": member_agent_public_session_state,
+                "agent_response": member_agent_response,
+                **calling_args,
+            }
+        )
+
+        log_debug(f"Updated team session state from agent={member_name}")
+
+    def _update_team_session_state(self, member_agent: Union[Agent, "Team"]) -> None:
+        """Update team session state from either an Agent or nested Team member."""
+        from agno.utils.log import log_debug
+        from agno.utils.merge_dict import merge_dictionaries
+
+        if member_agent.team_session_state is not None:
+            if self.team_session_state is None:
+                log_debug("Replacing team session state with member team session state")
+                self.team_session_state = member_agent.team_session_state
+            else:
+                log_debug("Updating team session state with member team session state")
+                merge_dictionaries(self.team_session_state, member_agent.team_session_state)
+            log_debug(f"Team session state set to: {self.team_session_state}")
 
 
 def get_team_by_id(
