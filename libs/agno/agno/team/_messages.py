@@ -52,6 +52,61 @@ from agno.utils.team import (
 from agno.utils.timer import Timer
 
 
+def _bind_run_session_state(team: "Team", run_context: Optional["RunContext"]) -> None:
+    """Expose RunContext.session_state on the team for callable system_message compat."""
+    if run_context is not None and run_context.session_state is not None:
+        team.session_state = run_context.session_state
+
+
+def _get_history_messages(
+    team: "Team",
+    session: TeamSession,
+    skip_role: Optional[str],
+) -> List[Message]:
+    team_id = team.id if team.parent_team_id is not None else None
+    if team.max_tokens_from_history is not None:
+        from agno.utils.history import get_messages_within_token_budget
+
+        return get_messages_within_token_budget(
+            session=session,
+            max_tokens=team.max_tokens_from_history,
+            team_id=team_id,
+            skip_role=skip_role,
+        )
+
+    return session.get_messages(
+        last_n_runs=team.num_history_runs,
+        limit=team.num_history_messages,
+        skip_roles=[skip_role] if skip_role else None,
+        team_id=team_id,
+    )
+
+
+def apply_manage_user_messages(
+    team: "Team",
+    message: Union[str, List, Dict, Message, BaseModel, List[Message], Any],
+    *,
+    user_message: str,
+    run_context: Optional["RunContext"] = None,
+) -> Union[str, List, Dict, Message, BaseModel, List[Message], Any]:
+    """Track user turns in team session state and expand {past_history} placeholders."""
+    if run_context is not None and run_context.session_state is not None:
+        session_state = run_context.session_state
+    else:
+        if team.session_state is None:
+            team.session_state = {}
+        session_state = team.session_state
+
+    history = session_state.setdefault("message_history", [])
+
+    if isinstance(message, str) and "{past_history}" in message:
+        formatted_history = "\n".join(f"{index + 1}. {item}" for index, item in enumerate(history))
+        message = message.replace("{past_history}", formatted_history)
+
+    history.append(user_message)
+    return message
+
+
 def _get_tool_names(member: Any, async_mode: bool = False) -> List[str]:
     """Extract tool names from a member's tools list."""
     tool_names: List[str] = []
@@ -364,6 +419,7 @@ def get_system_message(
 
     # 1. If the system_message is provided, use that.
     if team.system_message is not None:
+        _bind_run_session_state(team, run_context)
         if isinstance(team.system_message, Message):
             return team.system_message
 
@@ -595,6 +651,7 @@ async def aget_system_message(
 
     # 1. If the system_message is provided, use that.
     if team.system_message is not None:
+        _bind_run_session_state(team, run_context)
         if isinstance(team.system_message, Message):
             return team.system_message
 
@@ -891,12 +948,7 @@ def _get_run_messages(
         # to preserve conversation continuity.
         skip_role = team.system_message_role if team.system_message_role not in ["user", "assistant", "tool"] else None
 
-        history = session.get_messages(
-            last_n_runs=team.num_history_runs,
-            limit=team.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            team_id=team.id if team.parent_team_id is not None else None,
-        )
+        history = _get_history_messages(team, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages
@@ -1025,12 +1077,7 @@ async def _aget_run_messages(
         # Standard conversation roles ("user", "assistant", "tool") should never be filtered
         # to preserve conversation continuity.
         skip_role = team.system_message_role if team.system_message_role not in ["user", "assistant", "tool"] else None
-        history = session.get_messages(
-            last_n_runs=team.num_history_runs,
-            limit=team.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            team_id=team.id if team.parent_team_id is not None else None,
-        )
+        history = _get_history_messages(team, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages

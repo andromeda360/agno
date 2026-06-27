@@ -1021,9 +1021,10 @@ def _run_stream(
 
                 if agent.include_session_state_in_response:
                     log_debug("Adding agent session state to run response")
+                    session_state = run_context.session_state or {}
                     content = (
                         "\n<agent_state>\n"
-                        + json.dumps(agent.get_session_state(), default=str, indent=2)
+                        + json.dumps(session_state, default=str, indent=2)
                         + "\n</agent_state>"
                     )
                     run_response.content = (run_response.content or "") + content

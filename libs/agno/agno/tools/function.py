@@ -222,6 +222,14 @@ class Function(BaseModel):
             },
         )
 
+    def should_include_agent_content(self, agent_id: Optional[str]) -> bool:
+        """Return True if streamed member content should be included in tool output."""
+        if self.agent_ids_to_return_content_for is None:
+            return True
+        if agent_id is None:
+            return False
+        return agent_id in self.agent_ids_to_return_content_for
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Function":
         """Reconstruct a Function from a dictionary."""
@@ -902,7 +910,7 @@ class FunctionCall(BaseModel):
 
         # Check if the entrypoint has an agent argument (by name)
         if "agent" in sig.parameters:
-            entrypoint_args["agent"] = self.function._agent
+            entrypoint_args["agent"] = self.function._team or self.function._agent
         # Check if the entrypoint has a team argument (by name)
         if "team" in sig.parameters:
             entrypoint_args["team"] = self.function._team
@@ -942,17 +950,52 @@ class FunctionCall(BaseModel):
 
             hints = get_type_hints(self.function.entrypoint)  # type: ignore
             for param_name, hint in hints.items():
-                if param_name in entrypoint_args:
+                if param_name in entrypoint_args and entrypoint_args[param_name] is not None:
                     continue  # Already handled by name-based injection
-                if isinstance(hint, type):
-                    if issubclass(hint, Agent) and self.function._agent is not None:
-                        entrypoint_args[param_name] = self.function._agent
-                    elif issubclass(hint, Team) and self.function._team is not None:
-                        entrypoint_args[param_name] = self.function._team
+                owner = self._resolve_owner_for_type_hint(hint)
+                if owner is not None:
+                    entrypoint_args[param_name] = owner
         except Exception:
             pass
 
         return entrypoint_args
+
+    def _resolve_owner_for_type_hint(self, hint: Any) -> Any:
+        """Resolve Agent/Team-typed tool params, preferring team during team runs."""
+        import types
+        from typing import Union, get_args, get_origin
+
+        from agno.agent.agent import Agent
+        from agno.team.team import Team
+
+        candidates: tuple[Any, ...]
+        origin = get_origin(hint)
+        if origin is Union or isinstance(hint, types.UnionType):
+            candidates = get_args(hint)
+        elif isinstance(hint, type):
+            candidates = (hint,)
+        else:
+            return None
+
+        wants_team = wants_agent = False
+        for candidate in candidates:
+            if not isinstance(candidate, type):
+                continue
+            try:
+                if issubclass(candidate, Team):
+                    wants_team = True
+                if issubclass(candidate, Agent):
+                    wants_agent = True
+            except TypeError:
+                continue
+
+        if wants_team and self.function._team is not None:
+            return self.function._team
+        if wants_agent and self.function._agent is not None:
+            return self.function._agent
+        if wants_team or wants_agent:
+            return self.function._team or self.function._agent
+        return None
 
     def _build_hook_args(self, hook: Callable, name: str, func: Callable, args: Dict[str, Any]) -> Dict[str, Any]:
         """Build the arguments for the hook."""

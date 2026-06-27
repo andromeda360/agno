@@ -1040,6 +1040,11 @@ def execute_system_message(
         system_message_args["agent"] = agent
     if "team" in signature.parameters:
         system_message_args["team"] = team
+    if "session_state" in signature.parameters:
+        system_message_args["session_state"] = session_state if session_state is not None else {}
+    if "run_context" in signature.parameters:
+        system_message_args["run_context"] = run_context
+
     if inspect.iscoroutinefunction(system_message):
         raise ValueError("System message function is async, use `agent.arun()` instead")
 
@@ -1096,6 +1101,10 @@ async def aexecute_system_message(
         system_message_args["agent"] = agent
     if "team" in signature.parameters:
         system_message_args["team"] = team
+    if "session_state" in signature.parameters:
+        system_message_args["session_state"] = session_state if session_state is not None else {}
+    if "run_context" in signature.parameters:
+        system_message_args["run_context"] = run_context
 
     if inspect.iscoroutinefunction(system_message):
         return await system_message(**system_message_args)
