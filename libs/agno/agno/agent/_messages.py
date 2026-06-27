@@ -52,19 +52,10 @@ def _get_history_messages(
     skip_role: Optional[str],
 ) -> List[Message]:
     agent_id = agent.id if agent.team_id is not None else None
-    if agent.max_tokens_from_history is not None:
-        from agno.utils.history import get_messages_within_token_budget
-
-        return get_messages_within_token_budget(
-            session=session,
-            max_tokens=agent.max_tokens_from_history,
-            agent_id=agent_id,
-            skip_role=skip_role,
-        )
-
     return session.get_messages(
         last_n_runs=agent.num_history_runs,
         limit=agent.num_history_messages,
+        max_tokens=agent.max_tokens_from_history,
         skip_roles=[skip_role] if skip_role else None,
         agent_id=agent_id,
     )

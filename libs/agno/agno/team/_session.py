@@ -574,10 +574,12 @@ def get_session_messages(
     member_ids: Optional[List[str]] = None,
     last_n_runs: Optional[int] = None,
     limit: Optional[int] = None,
+    max_tokens: Optional[int] = None,
     skip_roles: Optional[List[str]] = None,
     skip_statuses: Optional[List[RunStatus]] = None,
     skip_history_messages: bool = True,
     skip_member_messages: bool = True,
+    model_encoding: str = "cl100k_base",
 ) -> List[Message]:
     """Get all messages belonging to the given session.
 
@@ -608,10 +610,12 @@ def get_session_messages(
         member_ids=member_ids,
         last_n_runs=last_n_runs,
         limit=limit,
+        max_tokens=max_tokens,
         skip_roles=skip_roles,
         skip_statuses=skip_statuses,
         skip_history_messages=skip_history_messages,
         skip_member_messages=skip_member_messages,
+        model_encoding=model_encoding,
     )
 
 
@@ -621,10 +625,12 @@ async def aget_session_messages(
     member_ids: Optional[List[str]] = None,
     last_n_runs: Optional[int] = None,
     limit: Optional[int] = None,
+    max_tokens: Optional[int] = None,
     skip_roles: Optional[List[str]] = None,
     skip_statuses: Optional[List[RunStatus]] = None,
     skip_history_messages: bool = True,
     skip_member_messages: bool = True,
+    model_encoding: str = "cl100k_base",
 ) -> List[Message]:
     """Get all messages belonging to the given session.
 
@@ -655,21 +661,28 @@ async def aget_session_messages(
         member_ids=member_ids,
         last_n_runs=last_n_runs,
         limit=limit,
+        max_tokens=max_tokens,
         skip_roles=skip_roles,
         skip_statuses=skip_statuses,
         skip_history_messages=skip_history_messages,
         skip_member_messages=skip_member_messages,
+        model_encoding=model_encoding,
     )
 
 
 def get_chat_history(
-    team: "Team", session_id: Optional[str] = None, last_n_runs: Optional[int] = None
+    team: "Team",
+    session_id: Optional[str] = None,
+    last_n_runs: Optional[int] = None,
+    max_tokens: Optional[int] = None,
+    model_encoding: str = "cl100k_base",
 ) -> List[Message]:
     """Return the chat history (user and assistant messages) for the session.
     Use get_messages() for more filtering options.
 
     Args:
         session_id: The session ID to get the chat history for. If not provided, the current cached session ID is used.
+        max_tokens: When set, include the most recent whole runs within this token budget.
 
     Returns:
         List[Message]: The chat history from the session.
@@ -678,19 +691,26 @@ def get_chat_history(
         team,
         session_id=session_id,
         last_n_runs=last_n_runs,
+        max_tokens=max_tokens,
         skip_roles=["system", "tool"],
         skip_member_messages=True,
         skip_statuses=[],
+        model_encoding=model_encoding,
     )
 
 
 async def aget_chat_history(
-    team: "Team", session_id: Optional[str] = None, last_n_runs: Optional[int] = None
+    team: "Team",
+    session_id: Optional[str] = None,
+    last_n_runs: Optional[int] = None,
+    max_tokens: Optional[int] = None,
+    model_encoding: str = "cl100k_base",
 ) -> List[Message]:
     """Read the chat history from the session
 
     Args:
         session_id: The session ID to get the chat history for. If not provided, the current cached session ID is used.
+        max_tokens: When set, include the most recent whole runs within this token budget.
     Returns:
         List[Message]: The chat history from the session.
     """
@@ -698,9 +718,11 @@ async def aget_chat_history(
         team,
         session_id=session_id,
         last_n_runs=last_n_runs,
+        max_tokens=max_tokens,
         skip_roles=["system", "tool"],
         skip_member_messages=True,
         skip_statuses=[],
+        model_encoding=model_encoding,
     )
 
 

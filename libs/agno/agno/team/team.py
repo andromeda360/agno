@@ -1640,10 +1640,12 @@ class Team:
         member_ids: Optional[List[str]] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
         skip_member_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         return _session.get_session_messages(
             self,
@@ -1651,10 +1653,12 @@ class Team:
             member_ids=member_ids,
             last_n_runs=last_n_runs,
             limit=limit,
+            max_tokens=max_tokens,
             skip_roles=skip_roles,
             skip_statuses=skip_statuses,
             skip_history_messages=skip_history_messages,
             skip_member_messages=skip_member_messages,
+            model_encoding=model_encoding,
         )
 
     async def aget_session_messages(
@@ -1663,10 +1667,12 @@ class Team:
         member_ids: Optional[List[str]] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
         skip_member_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         return await _session.aget_session_messages(
             self,
@@ -1674,19 +1680,43 @@ class Team:
             member_ids=member_ids,
             last_n_runs=last_n_runs,
             limit=limit,
+            max_tokens=max_tokens,
             skip_roles=skip_roles,
             skip_statuses=skip_statuses,
             skip_history_messages=skip_history_messages,
             skip_member_messages=skip_member_messages,
+            model_encoding=model_encoding,
         )
 
-    def get_chat_history(self, session_id: Optional[str] = None, last_n_runs: Optional[int] = None) -> List[Message]:
-        return _session.get_chat_history(self, session_id=session_id, last_n_runs=last_n_runs)
+    def get_chat_history(
+        self,
+        session_id: Optional[str] = None,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
+    ) -> List[Message]:
+        return _session.get_chat_history(
+            self,
+            session_id=session_id,
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     async def aget_chat_history(
-        self, session_id: Optional[str] = None, last_n_runs: Optional[int] = None
+        self,
+        session_id: Optional[str] = None,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
-        return await _session.aget_chat_history(self, session_id=session_id, last_n_runs=last_n_runs)
+        return await _session.aget_chat_history(
+            self,
+            session_id=session_id,
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     def get_session_summary(self, session_id: Optional[str] = None) -> Optional[SessionSummary]:
         return _session.get_session_summary(self, session_id=session_id)

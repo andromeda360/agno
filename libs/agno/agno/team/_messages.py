@@ -64,19 +64,10 @@ def _get_history_messages(
     skip_role: Optional[str],
 ) -> List[Message]:
     team_id = team.id if team.parent_team_id is not None else None
-    if team.max_tokens_from_history is not None:
-        from agno.utils.history import get_messages_within_token_budget
-
-        return get_messages_within_token_budget(
-            session=session,
-            max_tokens=team.max_tokens_from_history,
-            team_id=team_id,
-            skip_role=skip_role,
-        )
-
     return session.get_messages(
         last_n_runs=team.num_history_runs,
         limit=team.num_history_messages,
+        max_tokens=team.max_tokens_from_history,
         skip_roles=[skip_role] if skip_role else None,
         team_id=team_id,
     )
@@ -267,13 +258,15 @@ def _build_team_context(
     content = ""
     resolved_members = get_resolved_members(team, run_context)
     if resolved_members is not None and len(resolved_members) > 0:
-        content += _get_opening_prompt()
+        if not team.disable_built_in_transfer_tools:
+            content += _get_opening_prompt()
         content += "\n<team_members>\n"
         content += team.get_members_system_message_content(run_context=run_context, async_mode=async_mode)
-        if team.get_member_information_tool:
+        if team.get_member_information_tool and not team.disable_built_in_transfer_tools:
             content += "If you need to get information about your team members, you can use the `get_member_information` tool at any time.\n"
         content += "</team_members>\n"
-        content += _get_mode_instructions(team)
+        if not team.disable_built_in_transfer_tools:
+            content += _get_mode_instructions(team)
     return content
 
 

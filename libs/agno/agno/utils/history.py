@@ -25,27 +25,32 @@ def get_messages_within_token_budget(
     max_tokens: int,
     agent_id: Optional[str] = None,
     team_id: Optional[str] = None,
+    skip_roles: Optional[List[str]] = None,
     skip_role: Optional[str] = None,
     model_encoding: str = "cl100k_base",
 ) -> List[Message]:
     """Fetch the most recent runs' messages that fit within a token budget.
 
-    This method iterates from the most recent run backward, computing token
-    usage per run and accumulates runs until adding the next run would exceed
-    `max_tokens`. Only a single system message is included overall.
+    Called from ``Session.get_messages(max_tokens=...)`` and
+    ``Session.get_chat_history(max_tokens=...)``. Iterates from the most recent
+    run backward, accumulating whole runs until adding the next run would exceed
+    ``max_tokens``. Only a single system message is included overall.
 
     Args:
         session: The session to get messages from.
         max_tokens: Maximum number of tokens to include from history.
         agent_id: Optional agent id to filter runs.
         team_id: Optional team id to filter runs.
-        skip_role: If provided, skip messages with this role.
+        skip_roles: Skip messages with these roles.
+        skip_role: Deprecated alias for a single role to skip.
         model_encoding: The tokenizer encoding to use for token counting.
 
     Returns:
         A list of `Message` objects, ordered chronologically, whose total
         token content does not exceed `max_tokens`.
     """
+    if skip_roles is None and skip_role is not None:
+        skip_roles = [skip_role]
     if not session.runs or max_tokens <= 0:
         return []
 
@@ -67,7 +72,7 @@ def get_messages_within_token_budget(
         system_in_this_run: Optional[Message] = None
 
         for message in run_response.messages:
-            if skip_role and message.role == skip_role:
+            if skip_roles and message.role in skip_roles:
                 continue
             if hasattr(message, "from_history") and message.from_history:
                 continue
