@@ -1040,8 +1040,6 @@ def execute_system_message(
         system_message_args["agent"] = agent
     if "team" in signature.parameters:
         system_message_args["team"] = team
-    if "session_state" in signature.parameters:
-        system_message_args["session_state"] = session_state if session_state is not None else {}
     if "run_context" in signature.parameters:
         system_message_args["run_context"] = run_context
 
@@ -1101,8 +1099,6 @@ async def aexecute_system_message(
         system_message_args["agent"] = agent
     if "team" in signature.parameters:
         system_message_args["team"] = team
-    if "session_state" in signature.parameters:
-        system_message_args["session_state"] = session_state if session_state is not None else {}
     if "run_context" in signature.parameters:
         system_message_args["run_context"] = run_context
 

@@ -10,7 +10,6 @@ from typing import (
     Iterator,
     List,
     Literal,
-    Mapping,
     Optional,
     Sequence,
     Set,
