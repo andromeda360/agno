@@ -161,14 +161,14 @@ def _apply_manage_user_messages_if_needed(
     run_response: TeamRunOutput,
     manage_user_messages: bool,
     user_message: Optional[Any],
-    run_context: Optional[RunContext] = None,
+    run_context: RunContext,
 ) -> None:
     if manage_user_messages and user_message is not None:
         from agno.team._messages import apply_manage_user_messages
 
         run_input = cast(TeamRunInput, run_response.input)
         run_input.input_content = apply_manage_user_messages(
-            team, run_input.input_content, user_message=user_message, run_context=run_context
+            run_input.input_content, user_message=user_message, run_context=run_context
         )
 
 
@@ -1993,7 +1993,6 @@ def run_dispatch(
             from agno.team._messages import apply_manage_user_messages
 
             validated_input = apply_manage_user_messages(
-                team,
                 validated_input,
                 user_message=user_message,
                 run_context=RunContext(run_id=run_id, session_id=session_id, session_state=session_state),

@@ -53,20 +53,16 @@ from agno.utils.timer import Timer
 
 
 def apply_manage_user_messages(
-    team: "Team",
     message: Union[str, List, Dict, Message, BaseModel, List[Message], Any],
     *,
     user_message: str,
-    run_context: Optional["RunContext"] = None,
+    run_context: RunContext,
 ) -> Union[str, List, Dict, Message, BaseModel, List[Message], Any]:
-    """Track user turns in team session state and expand {past_history} placeholders."""
-    if run_context is not None and run_context.session_state is not None:
-        session_state = run_context.session_state
-    else:
-        if team.session_state is None:
-            team.session_state = {}
-        session_state = team.session_state
+    """Track user turns in RunContext session state and expand {past_history} placeholders."""
+    if run_context.session_state is None:
+        raise ValueError("manage_user_messages requires run_context.session_state")
 
+    session_state = run_context.session_state
     history = session_state.setdefault("message_history", [])
 
     if isinstance(message, str) and "{past_history}" in message:
