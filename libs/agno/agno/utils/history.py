@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
-
-import tiktoken
+from typing import List, Optional, Union
 
 from agno.models.message import Message
 from agno.session.agent import AgentSession
 from agno.session.team import TeamSession
 from agno.utils.log import log_debug
 from agno.utils.message import get_text_from_message
+from agno.utils.tokens import count_text_tokens
 
 
 def _count_tokens_with_encoding(messages: List[Message], model_encoding: str) -> int:
-    encoding = tiktoken.get_encoding(model_encoding)
+    # model_encoding is kept for API compatibility; count_text_tokens handles tokenizer selection.
+    del model_encoding
     total_tokens = 0
     for message in messages:
         text = get_text_from_message(message) or ""
-        total_tokens += len(encoding.encode(text))
+        total_tokens += count_text_tokens(text, model_id="gpt-4o")
     return total_tokens
 
 

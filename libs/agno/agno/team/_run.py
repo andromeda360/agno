@@ -145,14 +145,12 @@ def _yield_team_session_state_content_events(
 
     log_debug("Adding team session state to run response")
     session_state = run_context.session_state or {}
-    content = (
-        "\n<agent_state>\n"
-        + json.dumps(session_state, default=str, indent=2)
-        + "\n</agent_state>"
-    )
+    content = "\n<agent_state>\n" + json.dumps(session_state, default=str, indent=2) + "\n</agent_state>"
     run_response.content = (run_response.content or "") + content
     if run_response.messages:
-        run_response.messages[-1].content = (run_response.messages[-1].content or "") + content
+        last_content = run_response.messages[-1].content
+        if isinstance(last_content, str) or last_content is None:
+            run_response.messages[-1].content = (last_content or "") + content
     yield create_team_run_output_content_event(from_run_response=run_response, content=content)
 
 

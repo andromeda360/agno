@@ -1023,13 +1023,13 @@ def _run_stream(
                     log_debug("Adding agent session state to run response")
                     session_state = run_context.session_state or {}
                     content = (
-                        "\n<agent_state>\n"
-                        + json.dumps(session_state, default=str, indent=2)
-                        + "\n</agent_state>"
+                        "\n<agent_state>\n" + json.dumps(session_state, default=str, indent=2) + "\n</agent_state>"
                     )
                     run_response.content = (run_response.content or "") + content
                     if run_response.messages:
-                        run_response.messages[-1].content = (run_response.messages[-1].content or "") + content
+                        last_content = run_response.messages[-1].content
+                        if isinstance(last_content, str) or last_content is None:
+                            run_response.messages[-1].content = (last_content or "") + content
                     yield create_run_output_content_event(from_run_response=run_response, content=content)
 
                 # We should break out of the run function

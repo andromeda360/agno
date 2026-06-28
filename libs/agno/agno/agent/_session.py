@@ -635,16 +635,26 @@ def get_session_messages(
             model_encoding=model_encoding,
         )
 
+    if isinstance(session, AgentSession):
+        return session.get_messages(
+            # Only filter by agent_id if this is part of a team
+            agent_id=agent.id if agent.team_id is not None else None,
+            last_n_runs=last_n_runs,
+            limit=limit,
+            max_tokens=max_tokens,
+            skip_roles=skip_roles,
+            skip_statuses=skip_statuses,
+            skip_history_messages=skip_history_messages,
+            model_encoding=model_encoding,
+        )
+
     return session.get_messages(
-        # Only filter by agent_id if this is part of a team
         agent_id=agent.id if agent.team_id is not None else None,
         last_n_runs=last_n_runs,
         limit=limit,
-        max_tokens=max_tokens,
         skip_roles=skip_roles,
         skip_statuses=skip_statuses,
         skip_history_messages=skip_history_messages,
-        model_encoding=model_encoding,
     )
 
 
@@ -695,16 +705,25 @@ async def aget_session_messages(
             model_encoding=model_encoding,
         )
 
-    # Only filter by agent_id if this is part of a team
+    if isinstance(session, AgentSession):
+        return session.get_messages(
+            agent_id=agent.id if agent.team_id is not None else None,
+            last_n_runs=last_n_runs,
+            limit=limit,
+            max_tokens=max_tokens,
+            skip_roles=skip_roles,
+            skip_statuses=skip_statuses,
+            skip_history_messages=skip_history_messages,
+            model_encoding=model_encoding,
+        )
+
     return session.get_messages(
         agent_id=agent.id if agent.team_id is not None else None,
         last_n_runs=last_n_runs,
         limit=limit,
-        max_tokens=max_tokens,
         skip_roles=skip_roles,
         skip_statuses=skip_statuses,
         skip_history_messages=skip_history_messages,
-        model_encoding=model_encoding,
     )
 
 
