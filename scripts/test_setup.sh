@@ -36,6 +36,8 @@ VIRTUAL_ENV=${VENV_DIR} uv pip install -U -e "${AGNO_DIR}[tests]"
 VIRTUAL_ENV=${VENV_DIR} uv pip install brave-search
 # google-genai 2.9+ renamed step_delta → stepdelta, breaking gemini_interactions imports
 VIRTUAL_ENV=${VENV_DIR} uv pip install "google-genai>=1.52.0,<2.9.0"
+# scipy (via unstructured/docling/nltk) requires numpy 2.x; requirements.txt leaves 1.26.x
+VIRTUAL_ENV=${VENV_DIR} uv pip install "numpy>=2.0.0,<2.8.0"
 
 
 print_heading "Installing agno-infra"
