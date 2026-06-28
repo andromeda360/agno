@@ -40,12 +40,6 @@ from agno.utils.message import filter_tool_calls, get_text_from_message
 from agno.utils.prompts import get_json_output_prompt, get_response_model_format_prompt
 
 
-def _bind_run_session_state(agent: "Agent", run_context: Optional[RunContext]) -> None:
-    """Expose RunContext.session_state on the agent for callable system_message compat."""
-    if run_context is not None and run_context.session_state is not None:
-        agent.session_state = run_context.session_state
-
-
 def _get_history_messages(
     agent: "Agent",
     session: AgentSession,
@@ -149,7 +143,6 @@ def get_system_message(
 
     # 1. If the system_message is provided, use that.
     if agent.system_message is not None:
-        _bind_run_session_state(agent, run_context)
         if isinstance(agent.system_message, Message):
             return agent.system_message
 
@@ -497,7 +490,6 @@ async def aget_system_message(
 
     # 1. If the system_message is provided, use that.
     if agent.system_message is not None:
-        _bind_run_session_state(agent, run_context)
         if isinstance(agent.system_message, Message):
             return agent.system_message
 

@@ -743,16 +743,6 @@ class Agent:
             _init.set_learning_machine(self)
         return self._learning
 
-    @property
-    def run_response(self) -> Optional[RunOutput]:
-        if self._run_response is not None:
-            return self._run_response
-        return self.get_last_run_output()
-
-    @run_response.setter
-    def run_response(self, value: Optional[RunOutput]) -> None:
-        self._run_response = value
-
     # ---------------------------------------------------------------
     # _init module delegates
     # ---------------------------------------------------------------

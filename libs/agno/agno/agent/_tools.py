@@ -508,8 +508,6 @@ def determine_tools_for_model(
         for func in _functions:  # type: ignore
             if isinstance(func, Function):
                 func._run_context = run_context
-                if run_context is not None and run_context.session_state is not None:
-                    agent.session_state = run_context.session_state
                 func._images = joint_images
                 func._files = joint_files
                 func._audios = joint_audios

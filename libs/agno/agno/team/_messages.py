@@ -52,27 +52,6 @@ from agno.utils.team import (
 from agno.utils.timer import Timer
 
 
-def _bind_run_session_state(team: "Team", run_context: Optional["RunContext"]) -> None:
-    """Expose RunContext.session_state on the team for callable system_message compat."""
-    if run_context is not None and run_context.session_state is not None:
-        team.session_state = run_context.session_state
-
-
-def _get_history_messages(
-    team: "Team",
-    session: TeamSession,
-    skip_role: Optional[str],
-) -> List[Message]:
-    team_id = team.id if team.parent_team_id is not None else None
-    return session.get_messages(
-        last_n_runs=team.num_history_runs,
-        limit=team.num_history_messages,
-        max_tokens=team.max_tokens_from_history,
-        skip_roles=[skip_role] if skip_role else None,
-        team_id=team_id,
-    )
-
-
 def apply_manage_user_messages(
     team: "Team",
     message: Union[str, List, Dict, Message, BaseModel, List[Message], Any],
@@ -412,7 +391,6 @@ def get_system_message(
 
     # 1. If the system_message is provided, use that.
     if team.system_message is not None:
-        _bind_run_session_state(team, run_context)
         if isinstance(team.system_message, Message):
             return team.system_message
 
@@ -644,7 +622,6 @@ async def aget_system_message(
 
     # 1. If the system_message is provided, use that.
     if team.system_message is not None:
-        _bind_run_session_state(team, run_context)
         if isinstance(team.system_message, Message):
             return team.system_message
 
@@ -941,7 +918,13 @@ def _get_run_messages(
         # to preserve conversation continuity.
         skip_role = team.system_message_role if team.system_message_role not in ["user", "assistant", "tool"] else None
 
-        history = _get_history_messages(team, session, skip_role)
+        history = session.get_messages(
+            last_n_runs=team.num_history_runs,
+            limit=team.num_history_messages,
+            max_tokens=team.max_tokens_from_history,
+            skip_roles=[skip_role] if skip_role else None,
+            team_id=team.id if team.parent_team_id is not None else None,
+        )
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages
@@ -1070,7 +1053,13 @@ async def _aget_run_messages(
         # Standard conversation roles ("user", "assistant", "tool") should never be filtered
         # to preserve conversation continuity.
         skip_role = team.system_message_role if team.system_message_role not in ["user", "assistant", "tool"] else None
-        history = _get_history_messages(team, session, skip_role)
+        history = session.get_messages(
+            last_n_runs=team.num_history_runs,
+            limit=team.num_history_messages,
+            max_tokens=team.max_tokens_from_history,
+            skip_roles=[skip_role] if skip_role else None,
+            team_id=team.id if team.parent_team_id is not None else None,
+        )
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages

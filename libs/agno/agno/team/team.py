@@ -691,16 +691,6 @@ class Team:
         self._run_response: Optional[TeamRunOutput] = None
 
     @property
-    def run_response(self) -> Optional[TeamRunOutput]:
-        if self._run_response is not None:
-            return self._run_response
-        return self.get_last_run_output()
-
-    @run_response.setter
-    def run_response(self, value: Optional[TeamRunOutput]) -> None:
-        self._run_response = value
-
-    @property
     def background_executor(self) -> Any:
         return _init.background_executor(self)
 
