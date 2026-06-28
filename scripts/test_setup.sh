@@ -34,6 +34,8 @@ VIRTUAL_ENV=${VENV_DIR} uv pip install -r ${AGNO_DIR}/requirements.txt
 print_heading "Installing agno in editable mode with tests dependencies"
 VIRTUAL_ENV=${VENV_DIR} uv pip install -U -e "${AGNO_DIR}[tests]"
 VIRTUAL_ENV=${VENV_DIR} uv pip install brave-search
+# google-genai 2.9+ renamed step_delta → stepdelta, breaking gemini_interactions imports
+VIRTUAL_ENV=${VENV_DIR} uv pip install "google-genai>=1.52.0,<2.9.0"
 
 
 print_heading "Installing agno-infra"
