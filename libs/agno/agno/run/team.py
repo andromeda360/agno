@@ -10,7 +10,14 @@ from agno.models.message import Citations, Message
 from agno.models.metrics import RunMetrics
 from agno.models.response import ToolExecution
 from agno.reasoning.step import ReasoningStep
-from agno.run.agent import RunEvent, RunOutput, RunOutputEvent, run_output_event_from_dict
+from agno.run.agent import (
+    ArtifactPublishFailureEvent,
+    ArtifactPublishedEvent,
+    RunEvent,
+    RunOutput,
+    RunOutputEvent,
+    run_output_event_from_dict,
+)
 from agno.run.base import BaseRunOutputEvent, MessageReferences, RunStatus
 from agno.run.requirement import RunRequirement
 from agno.utils.log import log_error
@@ -416,6 +423,8 @@ class ReasoningCompletedEvent(BaseTeamRunEvent):
 class ToolCallStartedEvent(BaseTeamRunEvent):
     event: str = TeamRunEvent.tool_call_started.value
     tool: Optional[ToolExecution] = None
+    parent_step_id: Optional[str] = None
+    parallel_batch_id: Optional[str] = None
 
 
 @dataclass
@@ -663,6 +672,8 @@ TeamRunOutputEvent = Union[
     TaskStateUpdatedEvent,
     TaskCreatedEvent,
     TaskUpdatedEvent,
+    ArtifactPublishedEvent,
+    ArtifactPublishFailureEvent,
     CustomEvent,
 ]
 

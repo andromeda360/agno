@@ -190,6 +190,9 @@ class RunEvent(str, Enum):
     followups_started = "FollowupsStarted"
     followups_completed = "FollowupsCompleted"
 
+    artifact_published = "ArtifactPublished"
+    artifact_publish_failed = "ArtifactPublishFailed"
+
     custom_event = "CustomEvent"
 
 
@@ -510,6 +513,37 @@ class FollowupsCompletedEvent(BaseAgentRunEvent):
 
 
 @dataclass
+class ArtifactPublishedEvent(BaseAgentRunEvent):
+    """Event emitted when an artifact has been published during a run.
+
+    The ``event_type`` field carries the consumer-facing SSE contract
+    (e.g. ``artifact_initiated``) while ``event`` remains the Agno run-event name.
+    """
+
+    event: str = RunEvent.artifact_published.value
+    event_type: str = "artifact_initiated"
+    request_id: str = ""
+    artifact_id: str = ""
+    artifact_name: str = ""
+    artifact_type: str = ""
+    artifact_subtype: str = ""
+
+
+@dataclass
+class ArtifactPublishFailureEvent(BaseAgentRunEvent):
+    """Event emitted when artifact publication fails during a run."""
+
+    event: str = RunEvent.artifact_publish_failed.value
+    event_type: str = "artifact_publish_failure"
+    request_id: str = ""
+    artifact_id: str = ""
+    artifact_name: str = ""
+    artifact_type: str = ""
+    artifact_subtype: str = ""
+    error_message: str = ""
+
+
+@dataclass
 class CustomEvent(BaseAgentRunEvent):
     event: str = RunEvent.custom_event.value
     # tool_call_id for ToolExecution
@@ -556,6 +590,8 @@ RunOutputEvent = Union[
     CompressionCompletedEvent,
     FollowupsStartedEvent,
     FollowupsCompletedEvent,
+    ArtifactPublishedEvent,
+    ArtifactPublishFailureEvent,
     CustomEvent,
 ]
 
@@ -596,6 +632,8 @@ RUN_EVENT_TYPE_REGISTRY = {
     RunEvent.compression_completed.value: CompressionCompletedEvent,
     RunEvent.followups_started.value: FollowupsStartedEvent,
     RunEvent.followups_completed.value: FollowupsCompletedEvent,
+    RunEvent.artifact_published.value: ArtifactPublishedEvent,
+    RunEvent.artifact_publish_failed.value: ArtifactPublishFailureEvent,
     RunEvent.custom_event.value: CustomEvent,
 }
 

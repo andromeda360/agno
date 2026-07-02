@@ -10,6 +10,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -138,6 +139,10 @@ class Agent:
     num_history_messages: Optional[int] = None
     # Maximum number of tool calls to include from history (None = no limit)
     max_tool_calls_from_history: Optional[int] = None
+    # Maximum number of tokens to include from history (None = use num_history_runs)
+    max_tokens_from_history: Optional[int] = None
+    # If True, append public session state to the run response content
+    include_session_state_in_response: bool = False
 
     # --- Knowledge ---
     knowledge: Optional[Union[KnowledgeProtocol, Callable[..., KnowledgeProtocol]]] = None
@@ -411,6 +416,8 @@ class Agent:
         num_history_runs: Optional[int] = None,
         num_history_messages: Optional[int] = None,
         max_tool_calls_from_history: Optional[int] = None,
+        max_tokens_from_history: Optional[int] = None,
+        include_session_state_in_response: bool = False,
         store_media: bool = True,
         store_tool_messages: bool = True,
         store_history_messages: bool = False,
@@ -563,6 +570,8 @@ class Agent:
             self.num_history_runs = 3
 
         self.max_tool_calls_from_history = max_tool_calls_from_history
+        self.max_tokens_from_history = max_tokens_from_history
+        self.include_session_state_in_response = include_session_state_in_response
 
         self.store_media = store_media
         self.store_tool_messages = store_tool_messages
@@ -1024,18 +1033,22 @@ class Agent:
         session_id: Optional[str] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         return _session.get_session_messages(
             self,
             session_id=session_id,
             last_n_runs=last_n_runs,
             limit=limit,
+            max_tokens=max_tokens,
             skip_roles=skip_roles,
             skip_statuses=skip_statuses,
             skip_history_messages=skip_history_messages,
+            model_encoding=model_encoding,
         )
 
     async def aget_session_messages(
@@ -1043,27 +1056,53 @@ class Agent:
         session_id: Optional[str] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         return await _session.aget_session_messages(
             self,
             session_id=session_id,
             last_n_runs=last_n_runs,
             limit=limit,
+            max_tokens=max_tokens,
             skip_roles=skip_roles,
             skip_statuses=skip_statuses,
             skip_history_messages=skip_history_messages,
+            model_encoding=model_encoding,
         )
 
-    def get_chat_history(self, session_id: Optional[str] = None, last_n_runs: Optional[int] = None) -> List[Message]:
-        return _session.get_chat_history(self, session_id=session_id, last_n_runs=last_n_runs)
+    def get_chat_history(
+        self,
+        session_id: Optional[str] = None,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
+    ) -> List[Message]:
+        return _session.get_chat_history(
+            self,
+            session_id=session_id,
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     async def aget_chat_history(
-        self, session_id: Optional[str] = None, last_n_runs: Optional[int] = None
+        self,
+        session_id: Optional[str] = None,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
-        return await _session.aget_chat_history(self, session_id=session_id, last_n_runs=last_n_runs)
+        return await _session.aget_chat_history(
+            self,
+            session_id=session_id,
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     def get_session_summary(self, session_id: Optional[str] = None) -> Optional[SessionSummary]:
         return _session.get_session_summary(self, session_id=session_id)

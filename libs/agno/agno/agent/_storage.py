@@ -829,7 +829,7 @@ def from_dict(cls: Type[Agent], data: Dict[str, Any], registry: Optional[Registr
     # --- Handle MemoryManager reconstruction ---
     # TODO: implement memory manager deserialization
     # if "memory_manager" in config and isinstance(config["memory_manager"], dict):
-    #     from agno.memory import MemoryManager
+    #     Manager
     #     config["memory_manager"] = MemoryManager.from_dict(config["memory_manager"])
 
     # --- Handle SessionSummaryManager reconstruction ---

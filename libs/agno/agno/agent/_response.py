@@ -37,6 +37,7 @@ from agno.run.requirement import RunRequirement
 from agno.run.team import TeamRunOutputEvent
 from agno.session import AgentSession
 from agno.tools.function import Function
+from agno.utils.banavo_stream_events import BaseBanavoStreamEvent
 from agno.utils.events import (
     create_compression_completed_event,
     create_compression_started_event,
@@ -1353,6 +1354,10 @@ def handle_model_response_chunk(
     run_context: Optional[RunContext] = None,
 ) -> Iterator[RunOutputEvent]:
     from agno.run.workflow import WorkflowRunOutputEvent
+
+    if isinstance(model_response_event, BaseBanavoStreamEvent):
+        yield model_response_event  # type: ignore
+        return
 
     if (
         isinstance(model_response_event, tuple(get_args(RunOutputEvent)))

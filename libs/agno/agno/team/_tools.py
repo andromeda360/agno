@@ -275,7 +275,7 @@ def _determine_tools_for_model(
             debug_mode=debug_mode,
         )
         _tools.extend(task_tools)
-    elif resolved_members:
+    elif resolved_members and not team.disable_built_in_transfer_tools:
         # Get the user message if we are using the input directly
         user_message_content = None
         if team.determine_input_for_members is False:

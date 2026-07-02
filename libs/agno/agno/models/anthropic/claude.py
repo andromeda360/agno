@@ -137,6 +137,7 @@ class Claude(Model):
     top_k: Optional[int] = None
     cache_system_prompt: Optional[bool] = False
     extended_cache_time: Optional[bool] = False
+    cache_last_message: bool = False
     cache_tools: bool = False
     # Optional multi-block system prompt with per-block cache control.
     # Appended after the agent-built system message in the Anthropic ``system``
@@ -467,6 +468,7 @@ class Claude(Model):
                 "top_k": self.top_k,
                 "cache_system_prompt": self.cache_system_prompt,
                 "extended_cache_time": self.extended_cache_time,
+                "cache_last_message": self.cache_last_message,
                 "cache_tools": self.cache_tools,
                 "betas": self.betas,
             }
@@ -601,6 +603,32 @@ class Claude(Model):
         """Tag the last tool with cache_control when cache_tools is enabled."""
         if self.cache_tools and "tools" in request_kwargs and request_kwargs["tools"]:
             request_kwargs["tools"][-1]["cache_control"] = {"type": "ephemeral"}
+
+    def _apply_cache_control_to_last_user_message(self, chat_messages: List[Dict[str, Any]]) -> None:
+        """Tag the last user turn's last content block with cache_control when cache_last_message is enabled."""
+        if not self.cache_last_message or not chat_messages:
+            return
+
+        last_user_idx = None
+        for i in range(len(chat_messages) - 1, -1, -1):
+            if isinstance(chat_messages[i], dict) and chat_messages[i].get("role") == "user":
+                last_user_idx = i
+                break
+        if last_user_idx is None:
+            return
+
+        content = chat_messages[last_user_idx].get("content")
+        if not isinstance(content, list) or not content:
+            return
+
+        last_block = content[-1]
+        if not isinstance(last_block, dict):
+            return
+
+        cache_control: Dict[str, str] = {"type": "ephemeral"}
+        if self.extended_cache_time:
+            cache_control["ttl"] = "1h"
+        last_block["cache_control"] = cache_control
 
     def _build_system(self, system_message: str) -> List[Dict[str, Any]]:
         """Assemble the Anthropic ``system`` array.
@@ -746,6 +774,7 @@ class Claude(Model):
             request_kwargs = self._prepare_request_kwargs(
                 system_message, tools=tools, response_format=response_format, messages=messages
             )
+            self._apply_cache_control_to_last_user_message(chat_messages)
 
             if self._has_beta_features(response_format=response_format, tools=tools):
                 assistant_message.metrics.start_timer()
@@ -806,6 +835,7 @@ class Claude(Model):
         request_kwargs = self._prepare_request_kwargs(
             system_message, tools=tools, response_format=response_format, messages=messages
         )
+        self._apply_cache_control_to_last_user_message(chat_messages)
 
         try:
             # Beta features
@@ -857,6 +887,7 @@ class Claude(Model):
             request_kwargs = self._prepare_request_kwargs(
                 system_message, tools=tools, response_format=response_format, messages=messages
             )
+            self._apply_cache_control_to_last_user_message(chat_messages)
 
             # Beta features
             if self._has_beta_features(response_format=response_format, tools=tools):
@@ -916,6 +947,7 @@ class Claude(Model):
             request_kwargs = self._prepare_request_kwargs(
                 system_message, tools=tools, response_format=response_format, messages=messages
             )
+            self._apply_cache_control_to_last_user_message(chat_messages)
 
             if self._has_beta_features(response_format=response_format, tools=tools):
                 assistant_message.metrics.start_timer()

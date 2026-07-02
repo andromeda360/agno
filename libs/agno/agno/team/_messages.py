@@ -51,6 +51,45 @@ from agno.utils.team import (
 )
 from agno.utils.timer import Timer
 
+def _get_history_messages(
+    team: "Team",
+    session: TeamSession,
+    skip_role: Optional[str],
+) -> List[Message]:
+    team_id = team.id if team.parent_team_id is not None else None
+    return session.get_messages(
+        last_n_runs=team.num_history_runs,
+        limit=team.num_history_messages,
+        max_tokens=team.max_tokens_from_history,
+        skip_roles=[skip_role] if skip_role else None,
+        team_id=team_id,
+    )
+
+
+def apply_manage_user_messages(
+    team: "Team",
+    message: Union[str, List, Dict, Message, BaseModel, List[Message], Any],
+    *,
+    user_message: str,
+    run_context: Optional["RunContext"] = None,
+) -> Union[str, List, Dict, Message, BaseModel, List[Message], Any]:
+    """Track user turns in team session state and expand {past_history} placeholders."""
+    if run_context is not None and run_context.session_state is not None:
+        session_state = run_context.session_state
+    else:
+        if team.session_state is None:
+            team.session_state = {}
+        session_state = team.session_state
+
+    history = session_state.setdefault("message_history", [])
+
+    if isinstance(message, str) and "{past_history}" in message:
+        formatted_history = "\n".join(f"{index + 1}. {item}" for index, item in enumerate(history))
+        message = message.replace("{past_history}", formatted_history)
+
+    history.append(user_message)
+    return message
+
 
 def _get_tool_names(member: Any, async_mode: bool = False) -> List[str]:
     """Extract tool names from a member's tools list."""
@@ -212,13 +251,15 @@ def _build_team_context(
     content = ""
     resolved_members = get_resolved_members(team, run_context)
     if resolved_members is not None and len(resolved_members) > 0:
-        content += _get_opening_prompt()
+        if not team.disable_built_in_transfer_tools:
+            content += _get_opening_prompt()
         content += "\n<team_members>\n"
         content += team.get_members_system_message_content(run_context=run_context, async_mode=async_mode)
-        if team.get_member_information_tool:
+        if team.get_member_information_tool and not team.disable_built_in_transfer_tools:
             content += "If you need to get information about your team members, you can use the `get_member_information` tool at any time.\n"
         content += "</team_members>\n"
-        content += _get_mode_instructions(team)
+        if not team.disable_built_in_transfer_tools:
+            content += _get_mode_instructions(team)
     return content
 
 
@@ -891,12 +932,7 @@ def _get_run_messages(
         # to preserve conversation continuity.
         skip_role = team.system_message_role if team.system_message_role not in ["user", "assistant", "tool"] else None
 
-        history = session.get_messages(
-            last_n_runs=team.num_history_runs,
-            limit=team.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            team_id=team.id if team.parent_team_id is not None else None,
-        )
+        history = _get_history_messages(team, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages
@@ -1025,12 +1061,7 @@ async def _aget_run_messages(
         # Standard conversation roles ("user", "assistant", "tool") should never be filtered
         # to preserve conversation continuity.
         skip_role = team.system_message_role if team.system_message_role not in ["user", "assistant", "tool"] else None
-        history = session.get_messages(
-            last_n_runs=team.num_history_runs,
-            limit=team.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            team_id=team.id if team.parent_team_id is not None else None,
-        )
+        history = _get_history_messages(team, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages

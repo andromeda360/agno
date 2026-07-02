@@ -575,7 +575,10 @@ def create_tool_call_started_event(from_run_response: RunOutput, tool: ToolExecu
 
 
 def create_team_tool_call_started_event(
-    from_run_response: TeamRunOutput, tool: ToolExecution
+    from_run_response: TeamRunOutput,
+    tool: ToolExecution,
+    parent_step_id: Optional[str] = None,
+    parallel_batch_id: Optional[str] = None,
 ) -> TeamToolCallStartedEvent:
     return TeamToolCallStartedEvent(
         session_id=from_run_response.session_id,
@@ -583,6 +586,8 @@ def create_team_tool_call_started_event(
         team_name=from_run_response.team_name,  # type: ignore
         run_id=from_run_response.run_id,
         tool=tool,
+        parent_step_id=parent_step_id,
+        parallel_batch_id=parallel_batch_id,
     )
 
 

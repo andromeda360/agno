@@ -10,6 +10,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Set,
@@ -330,6 +331,12 @@ class Team:
     num_history_messages: Optional[int] = None
     # Maximum number of tool calls to include from history (None = no limit)
     max_tool_calls_from_history: Optional[int] = None
+    # Maximum number of tokens to include from history (None = use num_history_runs)
+    max_tokens_from_history: Optional[int] = None
+    # If True, append public session state to the run response content
+    include_session_state_in_response: bool = False
+    # If True, disable built-in transfer tools for member delegation
+    disable_built_in_transfer_tools: bool = False
 
     # --- Team Storage ---
     # Metadata stored with this team
@@ -494,6 +501,9 @@ class Team:
         num_history_runs: Optional[int] = None,
         num_history_messages: Optional[int] = None,
         max_tool_calls_from_history: Optional[int] = None,
+        max_tokens_from_history: Optional[int] = None,
+        include_session_state_in_response: bool = False,
+        disable_built_in_transfer_tools: bool = False,
         skills: Optional[Skills] = None,
         tools: Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], Callable[..., List]]] = None,
         tool_call_limit: Optional[int] = None,
@@ -616,6 +626,9 @@ class Team:
             num_history_runs=num_history_runs,
             num_history_messages=num_history_messages,
             max_tool_calls_from_history=max_tool_calls_from_history,
+            max_tokens_from_history=max_tokens_from_history,
+            include_session_state_in_response=include_session_state_in_response,
+            disable_built_in_transfer_tools=disable_built_in_transfer_tools,
             skills=skills,
             tools=tools,
             tool_call_limit=tool_call_limit,
@@ -675,6 +688,7 @@ class Team:
         # Component metadata (set by get_teams during DB loading)
         self._version: Optional[int] = None
         self._stage: Optional[str] = None
+        self._run_response: Optional[TeamRunOutput] = None
 
     @property
     def background_executor(self) -> Any:
@@ -1616,10 +1630,12 @@ class Team:
         member_ids: Optional[List[str]] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
         skip_member_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         return _session.get_session_messages(
             self,
@@ -1627,10 +1643,12 @@ class Team:
             member_ids=member_ids,
             last_n_runs=last_n_runs,
             limit=limit,
+            max_tokens=max_tokens,
             skip_roles=skip_roles,
             skip_statuses=skip_statuses,
             skip_history_messages=skip_history_messages,
             skip_member_messages=skip_member_messages,
+            model_encoding=model_encoding,
         )
 
     async def aget_session_messages(
@@ -1639,10 +1657,12 @@ class Team:
         member_ids: Optional[List[str]] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
         skip_member_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         return await _session.aget_session_messages(
             self,
@@ -1650,19 +1670,43 @@ class Team:
             member_ids=member_ids,
             last_n_runs=last_n_runs,
             limit=limit,
+            max_tokens=max_tokens,
             skip_roles=skip_roles,
             skip_statuses=skip_statuses,
             skip_history_messages=skip_history_messages,
             skip_member_messages=skip_member_messages,
+            model_encoding=model_encoding,
         )
 
-    def get_chat_history(self, session_id: Optional[str] = None, last_n_runs: Optional[int] = None) -> List[Message]:
-        return _session.get_chat_history(self, session_id=session_id, last_n_runs=last_n_runs)
+    def get_chat_history(
+        self,
+        session_id: Optional[str] = None,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
+    ) -> List[Message]:
+        return _session.get_chat_history(
+            self,
+            session_id=session_id,
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     async def aget_chat_history(
-        self, session_id: Optional[str] = None, last_n_runs: Optional[int] = None
+        self,
+        session_id: Optional[str] = None,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
-        return await _session.aget_chat_history(self, session_id=session_id, last_n_runs=last_n_runs)
+        return await _session.aget_chat_history(
+            self,
+            session_id=session_id,
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     def get_session_summary(self, session_id: Optional[str] = None) -> Optional[SessionSummary]:
         return _session.get_session_summary(self, session_id=session_id)

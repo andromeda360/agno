@@ -18,6 +18,7 @@ from agno.utils.tokens import count_schema_tokens
 try:
     from boto3 import client as AwsClient
     from boto3.session import Session
+    from botocore.config import Config
     from botocore.exceptions import ClientError
 except ImportError:
     raise ImportError("`boto3` not installed. Please install using `pip install boto3`")
@@ -59,6 +60,16 @@ class AwsBedrock(Model):
         aws_secret_access_key (Optional[str]): The AWS secret access key to use.
         aws_sso_auth (Optional[str]): Removes the need for an access and secret access key by leveraging the current profile's authentication
         session (Optional[Session]): A boto3 Session object to use for authentication.
+    Prompt caching is supported for Claude models via Converse API cachePoint blocks.
+    Set ``cache_system_prompt=True`` to cache the system message and ``cache_last_message=True``
+    to cache the trailing user turn. Use ``extended_cache_time=True`` for 1-hour TTL (default 5m).
+    See: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html
+
+    Extended thinking is supported via ``thinking={"type": "enabled", "budget_tokens": N}``,
+    forwarded through ``additionalModelRequestFields``.
+
+    Client timeout and retry behaviour can be configured via ``client_params``:
+    ``client_params={"max_retries": 5, "read_timeout": 90}``
     """
 
     id: str = "mistral.mistral-small-2402-v1:0"
@@ -81,6 +92,20 @@ class AwsBedrock(Model):
     append_trailing_user_message: Optional[bool] = None
     trailing_user_message_content: str = "continue"
 
+    # Extended thinking (forwarded via additionalModelRequestFields in Converse body)
+    thinking: Optional[Dict[str, Any]] = None
+
+    # Prompt caching (Converse cachePoint blocks — Claude models only)
+    cache_system_prompt: bool = False
+    cache_last_message: bool = False
+    # If True, sets ttl="1h" on cachePoints (supported on Sonnet 4.5, Haiku 4.5, Opus 4.5)
+    extended_cache_time: bool = False
+
+    # boto3 client configuration: supports "max_retries", "read_timeout", "connect_timeout"
+    client_params: Optional[Dict[str, Any]] = None
+    # Convenience shorthand for read_timeout; merged into client_params if set
+    timeout: Optional[float] = None
+
     client: Optional[AwsClient] = None
     async_client: Optional[Any] = None
     async_session: Optional[Any] = None
@@ -89,6 +114,36 @@ class AwsBedrock(Model):
         super().__post_init__()
         if self.append_trailing_user_message is None:
             self.append_trailing_user_message = not supports_prefill(self.id)
+
+    def _get_botocore_config(self) -> Optional[Config]:
+        """Build a botocore Config from client_params / timeout convenience field."""
+        params: Dict[str, Any] = dict(self.client_params or {})
+        if self.timeout is not None:
+            params.setdefault("read_timeout", self.timeout)
+        if not params:
+            return None
+
+        config_kwargs: Dict[str, Any] = {}
+        max_retries = params.pop("max_retries", None)
+        if max_retries is not None:
+            config_kwargs["retries"] = {"max_attempts": int(max_retries)}
+        # "timeout" is an alias for "read_timeout" (matches the old Claude client_params convention)
+        read_timeout = params.pop("read_timeout", None) or params.pop("timeout", None)
+        if read_timeout is not None:
+            config_kwargs["read_timeout"] = read_timeout
+        connect_timeout = params.pop("connect_timeout", None)
+        if connect_timeout is not None:
+            config_kwargs["connect_timeout"] = connect_timeout
+        # Forward any remaining keys directly (e.g. max_pool_connections)
+        config_kwargs.update(params)
+        return Config(**config_kwargs)
+
+    def _cache_point(self) -> Dict[str, Any]:
+        """Return a Converse API cachePoint block."""
+        cp: Dict[str, str] = {"type": "default"}
+        if self.extended_cache_time:
+            cp["ttl"] = "1h"
+        return {"cachePoint": cp}
 
     def get_client(self) -> AwsClient:
         """
@@ -104,10 +159,12 @@ class AwsBedrock(Model):
 
         # Return directly (not via self.client) so concurrent callers
         # on the same model instance each get their own client.
+        botocore_config = self._get_botocore_config()
         if self.session:
             return self.session.client(
                 "bedrock-runtime",
                 region_name=self.aws_region or self.session.region_name,
+                **({"config": botocore_config} if botocore_config else {}),
             )
 
         self.aws_access_key_id = self.aws_access_key_id or getenv("AWS_ACCESS_KEY_ID")
@@ -116,7 +173,11 @@ class AwsBedrock(Model):
         self.aws_region = self.aws_region or getenv("AWS_REGION")
 
         if self.aws_sso_auth:
-            self.client = AwsClient(service_name="bedrock-runtime", region_name=self.aws_region)
+            self.client = AwsClient(
+                service_name="bedrock-runtime",
+                region_name=self.aws_region,
+                **({"config": botocore_config} if botocore_config else {}),
+            )
         else:
             if not self.aws_access_key_id or not self.aws_secret_access_key:
                 log_error(
@@ -129,6 +190,7 @@ class AwsBedrock(Model):
                 aws_access_key_id=self.aws_access_key_id,
                 aws_secret_access_key=self.aws_secret_access_key,
                 aws_session_token=self.aws_session_token,
+                **({"config": botocore_config} if botocore_config else {}),
             )
         return self.client
 
@@ -146,6 +208,7 @@ class AwsBedrock(Model):
 
         # When using a boto3 session, create the aioboto3 session from it
         # so that session credentials (IAM roles, EKS, STS) are respected.
+        botocore_config = self._get_botocore_config()
         if self.session:
             credentials = self.session.get_credentials()
             if credentials is None:
@@ -162,7 +225,10 @@ class AwsBedrock(Model):
                 aws_session_token=frozen.token,
                 region_name=self.aws_region or self.session.region_name,
             )
-            return async_session.client("bedrock-runtime")
+            return async_session.client(
+                "bedrock-runtime",
+                **({"config": botocore_config} if botocore_config else {}),
+            )
 
         if self.async_session is None:
             self.aws_access_key_id = self.aws_access_key_id or getenv("AWS_ACCESS_KEY_ID")
@@ -202,6 +268,8 @@ class AwsBedrock(Model):
                 if self.aws_session_token:
                     client_kwargs["aws_session_token"] = self.aws_session_token
 
+        if botocore_config:
+            client_kwargs["config"] = botocore_config
         return self.async_session.client(**client_kwargs)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -268,8 +336,17 @@ class AwsBedrock(Model):
         Returns:
             Dict[str, Any]: The inference config.
         """
+        # When extended thinking is enabled the caller wants the full output
+        # budget available.  Bedrock requires an explicit maxTokens and it must
+        # exceed budget_tokens.  Default to 64 000 (the Converse API ceiling for
+        # Claude extended-thinking models) so callers don't have to set it.
+        max_tokens = self.max_tokens
+        if max_tokens is None and self.thinking:
+            budget = (self.thinking or {}).get("budget_tokens", 0)
+            max_tokens = max(64000, budget + 1)
+
         request_kwargs = {
-            "maxTokens": self.max_tokens,
+            "maxTokens": max_tokens,
             "temperature": self.temperature,
             "topP": self.top_p,
             "stopSequences": self.stop_sequences,
@@ -300,6 +377,8 @@ class AwsBedrock(Model):
         for message in messages:
             if message.role == "system":
                 system_message = [{"text": message.content}]
+                if self.cache_system_prompt:
+                    system_message.append(self._cache_point())
             elif message.role == "tool":
                 content = message.get_content(use_compressed_content=compress_tool_results)
                 tool_result = {
@@ -432,7 +511,18 @@ class AwsBedrock(Model):
             log_info("Appending trailing user message because this model does not support assistant message prefill")
             formatted_messages.append({"role": "user", "content": [{"text": self.trailing_user_message_content}]})
 
-        # TODO: Add caching: https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference-call.html
+        # Append a cachePoint after the last user message content block when
+        # cache_last_message is enabled.  This must be the very last content
+        # block in the last user turn.
+        if self.cache_last_message and formatted_messages:
+            last_user_idx = None
+            for i in range(len(formatted_messages) - 1, -1, -1):
+                if formatted_messages[i]["role"] == "user":
+                    last_user_idx = i
+                    break
+            if last_user_idx is not None:
+                formatted_messages[last_user_idx]["content"].append(self._cache_point())
+
         return formatted_messages, system_message
 
     def count_tokens(
@@ -525,6 +615,12 @@ class AwsBedrock(Model):
                 log_debug(f"Calling {self.provider} with request parameters: {self.request_params}", log_level=2)
                 body.update(**self.request_params)
 
+            if self.thinking:
+                body["additionalModelRequestFields"] = {
+                    **body.get("additionalModelRequestFields", {}),
+                    "thinking": self.thinking,
+                }
+
             assistant_message.metrics.start_timer()
             response = self.get_client().converse(modelId=self.id, messages=formatted_messages, **body)
             assistant_message.metrics.stop_timer()
@@ -569,6 +665,12 @@ class AwsBedrock(Model):
 
             if self.request_params:
                 body.update(**self.request_params)
+
+            if self.thinking:
+                body["additionalModelRequestFields"] = {
+                    **body.get("additionalModelRequestFields", {}),
+                    "thinking": self.thinking,
+                }
 
             assistant_message.metrics.start_timer()
 
@@ -621,6 +723,12 @@ class AwsBedrock(Model):
                 log_debug(f"Calling {self.provider} with request parameters: {self.request_params}", log_level=2)
                 body.update(**self.request_params)
 
+            if self.thinking:
+                body["additionalModelRequestFields"] = {
+                    **body.get("additionalModelRequestFields", {}),
+                    "thinking": self.thinking,
+                }
+
             assistant_message.metrics.start_timer()
 
             async with self.get_async_client() as client:
@@ -668,6 +776,12 @@ class AwsBedrock(Model):
 
             if self.request_params:
                 body.update(**self.request_params)
+
+            if self.thinking:
+                body["additionalModelRequestFields"] = {
+                    **body.get("additionalModelRequestFields", {}),
+                    "thinking": self.thinking,
+                }
 
             assistant_message.metrics.start_timer()
 

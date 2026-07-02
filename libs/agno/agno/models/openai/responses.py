@@ -1,7 +1,10 @@
 import asyncio
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Tuple, Type, Union
+from enum import Enum
+from time import perf_counter
+from typing import Any, AsyncIterator, ClassVar, Dict, Iterator, List, Optional, Tuple, Type, Union
+from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel
@@ -25,6 +28,18 @@ try:
     from openai.types.responses import Response, ResponseReasoningItem, ResponseStreamEvent, ResponseUsage
 except ImportError as e:
     raise ImportError("`openai` not installed. Please install using `pip install openai -U`") from e
+
+
+class OpenAIServiceTier(str, Enum):
+    AUTO = "auto"
+    DEFAULT = "default"
+    PRIORITY = "priority"  # faster but more expensive
+    FLEX = "flex"  # cheaper but slower
+
+
+class OpenAIPromptCacheRetention(str, Enum):
+    IN_MEMORY = "in_memory"  # default value: volatile gpu memory 5-10 mins max of 1 hr
+    LOCAL = "24h"  # more persistent local memory up to 24 hours
 
 
 @dataclass
@@ -55,7 +70,7 @@ class OpenAIResponses(Model):
     top_p: Optional[float] = None
     truncation: Optional[Literal["auto", "disabled"]] = None
     user: Optional[str] = None
-    service_tier: Optional[Literal["auto", "default", "flex", "priority"]] = None
+    service_tier: Optional[Union[OpenAIServiceTier, Literal["auto", "default", "flex", "priority"]]] = None
     strict_output: bool = True  # When True, guarantees schema adherence for structured outputs. When False, attempts to follow schema as a guide but may occasionally deviate
     background: Optional[bool] = (
         None  # When True, enables background mode for long-running tasks. The API returns immediately and the response is polled until completion. Not supported for streaming.
@@ -79,6 +94,24 @@ class OpenAIResponses(Model):
     default_query: Optional[Dict[str, str]] = None
     http_client: Optional[Union[httpx.Client, httpx.AsyncClient]] = None
     client_params: Optional[Dict[str, Any]] = None
+    prompt_cache_key: Optional[str] = None
+    prompt_cache_retention: Optional[Union[OpenAIPromptCacheRetention, Literal["in_memory", "24h"]]] = None
+
+    # Redundant request settings
+    redundant_calls: int = 1  # Number of parallel requests to race; set to 1 to disable
+    # Tracks the "winning" cache key suffix (e.g., uuid) from previous redundant calls.
+    sticky_cache_state: Optional[Dict[str, str]] = None
+
+    # Adaptive redundancy settings
+    adaptive_redundancy: bool = False
+    adaptive_redundancy_initial_delay: float = 2.0
+    adaptive_redundancy_trace_factor: float = 2.0  # Deviation multiplier (K) for threshold
+    adaptive_mode_id: Optional[str] = None
+    _current_adaptive_state: Optional[Dict[str, Any]] = field(default=None, repr=False, compare=False)
+
+    # Registry to persist adaptive state across instances with same mode_id
+    # Format: {mode_id: {"srtt": float, "rttvar": float, "total_calls": int, "triggered_calls": int}}
+    _adaptive_delay_registry: ClassVar[Dict[str, Dict[str, Any]]] = {}
 
     # Parameters affecting built-in tools
     vector_store_name: str = "knowledge_base"
@@ -99,6 +132,20 @@ class OpenAIResponses(Model):
 
     def get_provider(self) -> str:
         return f"{super().get_provider()} Responses"
+
+    def _service_tier_value(self) -> Optional[str]:
+        if self.service_tier is None:
+            return None
+        if isinstance(self.service_tier, OpenAIServiceTier):
+            return self.service_tier.value
+        return self.service_tier
+
+    def _prompt_cache_retention_value(self) -> Optional[str]:
+        if self.prompt_cache_retention is None:
+            return None
+        if isinstance(self.prompt_cache_retention, OpenAIPromptCacheRetention):
+            return self.prompt_cache_retention.value
+        return self.prompt_cache_retention
 
     def _using_reasoning_model(self) -> bool:
         """Return True if the contextual used model is a known reasoning model."""
@@ -279,11 +326,18 @@ class OpenAIResponses(Model):
             "top_p": self.top_p,
             "truncation": self.truncation,
             "user": self.user,
-            "service_tier": self.service_tier,
+            "service_tier": self._service_tier_value(),
             "extra_headers": self.extra_headers,
             "extra_query": self.extra_query,
             "extra_body": self.extra_body,
         }
+
+        if self.prompt_cache_key:
+            base_params["prompt_cache_key"] = self.prompt_cache_key
+
+        if self.prompt_cache_retention:
+            base_params["prompt_cache_retention"] = self._prompt_cache_retention_value()
+
         # Populate the reasoning parameter
         base_params = self._set_reasoning_request_param(base_params)
 
@@ -864,43 +918,36 @@ class OpenAIResponses(Model):
             request_params = self.get_request_params(
                 messages=messages, response_format=response_format, tools=tools, tool_choice=tool_choice
             )
+            formatted_input = self._format_messages(messages, compress_tool_results, tools=tools)
 
             assistant_message.metrics.start_timer()
 
-            provider_response = await self.get_async_client().responses.create(
-                model=self.id,
-                input=self._format_messages(messages, compress_tool_results, tools=tools),  # type: ignore
-                **request_params,
-            )
+            n_calls = max(1, int(self.redundant_calls or 1))
+            if self.adaptive_redundancy:
+                n_calls = 1
+
+            use_redundancy = self.adaptive_redundancy or n_calls > 1
+
+            if use_redundancy and not self.background:
+                provider_response = await self._race_async_responses(
+                    formatted_input=formatted_input,  # type: ignore
+                    request_params=request_params,
+                    n_calls=n_calls,
+                )
+            else:
+                provider_response = await self.get_async_client().responses.create(
+                    model=self.id,
+                    input=formatted_input,  # type: ignore
+                    **request_params,
+                )
 
             # Stop the timer before polling so wall-clock polling wait is not counted as inference time.
-            # For background mode, the initial create() measures submission latency; the polling loop
-            # is then allowed to run without inflating time_to_first_token / total time metrics.
             assistant_message.metrics.stop_timer()
 
-            # Poll for completion if background mode is enabled
-            if self.background and provider_response.status in ("queued", "in_progress"):
-                log_debug(f"Background response submitted: {provider_response.id}, polling for completion...")
-                provider_response = await self._apoll_background_response(provider_response.id)
-
-            if provider_response.status == "failed":
-                error_msg = provider_response.error.message if provider_response.error else "Background response failed"
-                raise ModelProviderError(message=error_msg, model_name=self.name, model_id=self.id)
-            if provider_response.status == "cancelled":
-                raise ModelProviderError(
-                    message=f"Background response {provider_response.id} was cancelled",
-                    model_name=self.name,
-                    model_id=self.id,
-                )
-            if provider_response.status == "incomplete":
-                log_warning(
-                    f"Background response {provider_response.id} completed with status 'incomplete': "
-                    f"{provider_response.incomplete_details}"
-                )
-
-            model_response = self._parse_provider_response(provider_response, response_format=response_format)
-
-            return model_response
+            return await self._finalize_provider_response(
+                provider_response=provider_response,
+                response_format=response_format,
+            )
 
         except RateLimitError as exc:
             log_error(f"Rate limit error from OpenAI API: {exc}")
@@ -1370,3 +1417,228 @@ class OpenAIResponses(Model):
             metrics.reasoning_tokens = output_tokens_details.reasoning_tokens
 
         return metrics
+
+    async def _finalize_provider_response(
+        self,
+        provider_response: Response,
+        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
+    ) -> ModelResponse:
+        """Poll background responses if needed, validate status, and parse the result."""
+        if self.background and provider_response.status in ("queued", "in_progress"):
+            log_debug(f"Background response submitted: {provider_response.id}, polling for completion...")
+            provider_response = await self._apoll_background_response(provider_response.id)
+
+        if provider_response.status == "failed":
+            error_msg = provider_response.error.message if provider_response.error else "Background response failed"
+            raise ModelProviderError(message=error_msg, model_name=self.name, model_id=self.id)
+        if provider_response.status == "cancelled":
+            raise ModelProviderError(
+                message=f"Background response {provider_response.id} was cancelled",
+                model_name=self.name,
+                model_id=self.id,
+            )
+        if provider_response.status == "incomplete":
+            log_warning(
+                f"Background response {provider_response.id} completed with status 'incomplete': "
+                f"{provider_response.incomplete_details}"
+            )
+
+        return self._parse_provider_response(provider_response, response_format=response_format)
+
+    async def _race_async_responses(
+        self,
+        formatted_input: List[Any],
+        request_params: Dict[str, Any],
+        n_calls: int,
+    ) -> Response:
+        """Race parallel Responses API calls with optional adaptive redundancy."""
+        client = self.get_async_client()
+
+        async def _do_call_with_kwargs(idx: int, params: Dict[str, Any]) -> Tuple[int, Response]:
+            res = await client.responses.create(
+                model=self.id,
+                input=formatted_input,  # type: ignore
+                **params,
+            )
+            return idx, res
+
+        tasks: List[asyncio.Task] = []
+        suffixes: Dict[int, str] = {}
+
+        if self.adaptive_redundancy:
+            self._init_adaptive_state()
+            delay_threshold = self._get_adaptive_threshold()
+
+            if self.sticky_cache_state is None:
+                self.sticky_cache_state = {}
+
+            current_winner = self.sticky_cache_state.get("suffix") or str(uuid4())
+            self.sticky_cache_state["suffix"] = current_winner
+            suffixes[0] = current_winner
+
+            call1_kwargs = request_params.copy()
+            call1_kwargs["prompt_cache_key"] = f"{call1_kwargs.get('prompt_cache_key', '')}_{current_winner}"
+
+            t1_start = perf_counter()
+            t1 = asyncio.create_task(_do_call_with_kwargs(0, call1_kwargs))
+            tasks.append(t1)
+
+            srtt = self._current_adaptive_state.get("srtt", 0.0) if self._current_adaptive_state else 0.0
+            rttvar = self._current_adaptive_state.get("rttvar", 0.0) if self._current_adaptive_state else 0.0
+
+            log_debug(
+                f"Adaptive Redundancy [{self.adaptive_mode_id or 'local'}]: "
+                f"Threshold={delay_threshold:.3f}s (Mean={srtt:.3f}s, Dev={rttvar:.3f}s). Starting Call 1."
+            )
+
+            done_initial, _ = await asyncio.wait([t1], timeout=delay_threshold)
+
+            if done_initial:
+                try:
+                    idx, result = t1.result()
+                    duration = perf_counter() - t1_start
+                    self._update_adaptive_stats(duration)
+                    log_debug(f"Adaptive Redundancy: Call 1 finished in {duration:.3f}s (Success)")
+                    return result
+                except Exception:
+                    log_warning(
+                        f"Adaptive Redundancy [{self.adaptive_mode_id}]: Call 1 failed. Starting Call 2 immediately."
+                    )
+            else:
+                log_debug(
+                    f"Adaptive Redundancy [{self.adaptive_mode_id}]: Threshold {delay_threshold:.3f}s exceeded. "
+                    "Triggering redundant Call 2."
+                )
+                if self._current_adaptive_state:
+                    self._current_adaptive_state["triggered_calls"] = (
+                        self._current_adaptive_state.get("triggered_calls", 0) + 1
+                    )
+
+            fresh_suffix = str(uuid4())
+            suffixes[1] = fresh_suffix
+
+            call2_kwargs = request_params.copy()
+            call2_kwargs["prompt_cache_key"] = f"{call2_kwargs.get('prompt_cache_key', '')}_{fresh_suffix}"
+
+            t2 = asyncio.create_task(_do_call_with_kwargs(1, call2_kwargs))
+            tasks.append(t2)
+
+        elif n_calls > 1:
+            log_debug(f"Racing {n_calls} redundant calls")
+
+            if self.sticky_cache_state is None:
+                self.sticky_cache_state = {}
+
+            current_winner = self.sticky_cache_state.get("suffix") or str(uuid4())
+            self.sticky_cache_state["suffix"] = current_winner
+
+            for i in range(n_calls):
+                call_kwargs = request_params.copy()
+                suffix = current_winner if i == 0 else str(uuid4())
+                suffixes[i] = suffix
+                call_kwargs["prompt_cache_key"] = f"{call_kwargs.get('prompt_cache_key', '')}_{suffix}"
+                tasks.append(asyncio.create_task(_do_call_with_kwargs(i, call_kwargs)))
+        else:
+            tasks.append(asyncio.create_task(_do_call_with_kwargs(0, request_params)))
+
+        last_exc: Optional[BaseException] = None
+        _start_time = perf_counter()
+
+        try:
+            while tasks:
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                for t in done:
+                    try:
+                        req_idx, result = t.result()
+
+                        if self.adaptive_redundancy and req_idx == 0 and "t1_start" in locals():
+                            duration = perf_counter() - t1_start
+                        else:
+                            duration = perf_counter() - _start_time
+
+                        log_debug(f"Redundant call {req_idx} completed first in {duration:.3f}s")
+
+                        if self.adaptive_redundancy:
+                            if req_idx > 0 and self._current_adaptive_state is not None:
+                                self._current_adaptive_state["redundancy_wins"] = (
+                                    self._current_adaptive_state.get("redundancy_wins", 0) + 1
+                                )
+                            self._update_adaptive_stats(duration)
+
+                        if self.sticky_cache_state is not None and req_idx > 0:
+                            winning_suffix = suffixes.get(req_idx)
+                            if winning_suffix:
+                                log_debug(f"Sticky Cache Update: Switching winner to {winning_suffix}")
+                                self.sticky_cache_state["suffix"] = winning_suffix
+
+                        for p in pending:
+                            p.cancel()
+                        if pending:
+                            await asyncio.gather(*pending, return_exceptions=True)
+                        return result
+                    except (RateLimitError, APIConnectionError, APIStatusError) as e:
+                        last_exc = e
+                        log_warning(f"OpenAI redundant call failed, trying next: {e}")
+                        continue
+                    except Exception as e:
+                        last_exc = e
+                        log_warning(f"OpenAI redundant call unexpected error, trying next: {e}")
+                        continue
+                tasks = list(pending)
+        finally:
+            for t in tasks:
+                if not t.done():
+                    t.cancel()
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("All redundant OpenAI calls failed without exception.")
+
+    def _init_adaptive_state(self) -> None:
+        """Initialize or retrieve adaptive state from registry."""
+        if self.adaptive_mode_id and self._current_adaptive_state is None:
+            if self.adaptive_mode_id not in self._adaptive_delay_registry:
+                self._adaptive_delay_registry[self.adaptive_mode_id] = {
+                    "srtt": self.adaptive_redundancy_initial_delay,
+                    "rttvar": self.adaptive_redundancy_initial_delay / 2,
+                    "total_calls": 0,
+                    "triggered_calls": 0,
+                    "redundancy_wins": 0,
+                }
+            self._current_adaptive_state = self._adaptive_delay_registry.get(self.adaptive_mode_id)
+
+    def _get_adaptive_threshold(self) -> float:
+        """Calculate current delay threshold: SRTT + (K * RTTVAR)."""
+        if self._current_adaptive_state:
+            srtt = self._current_adaptive_state.get("srtt", self.adaptive_redundancy_initial_delay)
+            rttvar = self._current_adaptive_state.get("rttvar", 0.0)
+            return srtt + (self.adaptive_redundancy_trace_factor * rttvar)
+        return self.adaptive_redundancy_initial_delay
+
+    def _update_adaptive_stats(self, duration: float) -> None:
+        """Update Jacobson's stats and log trigger rate."""
+        if self._current_adaptive_state:
+            self._current_adaptive_state["total_calls"] = self._current_adaptive_state.get("total_calls", 0) + 1
+
+            srtt = self._current_adaptive_state.get("srtt", self.adaptive_redundancy_initial_delay)
+            rttvar = self._current_adaptive_state.get("rttvar", 0.0)
+
+            err = duration - srtt
+            self._current_adaptive_state["srtt"] = srtt + 0.125 * err
+            self._current_adaptive_state["rttvar"] = rttvar + 0.25 * (abs(err) - rttvar)
+
+            total = self._current_adaptive_state.get("total_calls", 1)
+            triggered = self._current_adaptive_state.get("triggered_calls", 0)
+            wins = self._current_adaptive_state.get("redundancy_wins", 0)
+
+            trigger_rate = (triggered / total) * 100 if total > 0 else 0.0
+            win_rate = (wins / triggered) * 100 if triggered > 0 else 0.0
+
+            log_debug(
+                f"Adaptive Stats [{self.adaptive_mode_id or 'local'}]: "
+                f"Mean={self._current_adaptive_state['srtt']:.3f}s, Dev={self._current_adaptive_state['rttvar']:.3f}s, "
+                f"Triggered: {trigger_rate:.1f}% ({triggered}/{total}), "
+                f"Wins: {win_rate:.1f}% ({wins}/{triggered})"
+            )
