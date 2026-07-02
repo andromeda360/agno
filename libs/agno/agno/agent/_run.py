@@ -93,7 +93,6 @@ from agno.utils.events import (
     create_run_content_completed_event,
     create_run_continued_event,
     create_run_error_event,
-    create_run_output_content_event,
     create_run_paused_event,
     create_run_started_event,
     create_session_summary_completed_event,
@@ -1018,19 +1017,6 @@ def _run_stream(
                     if not isinstance(event, _CANCEL_BYPASS_EVENT_TYPES):
                         raise_if_cancelled(run_response.run_id)  # type: ignore
                     yield event
-
-                if agent.include_session_state_in_response:
-                    log_debug("Adding agent session state to run response")
-                    session_state = run_context.session_state or {}
-                    content = (
-                        "\n<agent_state>\n"
-                        + json.dumps(session_state, default=str, indent=2)
-                        + "\n</agent_state>"
-                    )
-                    run_response.content = (run_response.content or "") + content
-                    if run_response.messages:
-                        run_response.messages[-1].content = (run_response.messages[-1].content or "") + content
-                    yield create_run_output_content_event(from_run_response=run_response, content=content)
 
                 # We should break out of the run function
                 if any(tool_call.is_paused for tool_call in run_response.tools or []):

@@ -141,8 +141,6 @@ class Agent:
     max_tool_calls_from_history: Optional[int] = None
     # Maximum number of tokens to include from history (None = use num_history_runs)
     max_tokens_from_history: Optional[int] = None
-    # If True, append public session state to the run response content
-    include_session_state_in_response: bool = False
 
     # --- Knowledge ---
     knowledge: Optional[Union[KnowledgeProtocol, Callable[..., KnowledgeProtocol]]] = None
@@ -417,7 +415,6 @@ class Agent:
         num_history_messages: Optional[int] = None,
         max_tool_calls_from_history: Optional[int] = None,
         max_tokens_from_history: Optional[int] = None,
-        include_session_state_in_response: bool = False,
         store_media: bool = True,
         store_tool_messages: bool = True,
         store_history_messages: bool = False,
@@ -571,7 +568,6 @@ class Agent:
 
         self.max_tool_calls_from_history = max_tool_calls_from_history
         self.max_tokens_from_history = max_tokens_from_history
-        self.include_session_state_in_response = include_session_state_in_response
 
         self.store_media = store_media
         self.store_tool_messages = store_tool_messages

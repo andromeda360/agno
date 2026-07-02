@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 from collections import deque
 from typing import (
@@ -99,7 +98,6 @@ from agno.utils.events import (
     create_team_run_completed_event,
     create_team_run_content_completed_event,
     create_team_run_error_event,
-    create_team_run_output_content_event,
     create_team_run_started_event,
     create_team_session_summary_completed_event,
     create_team_session_summary_started_event,
@@ -133,27 +131,6 @@ _MEMBER_CANCEL_BYPASS_EVENT_TYPES = (
 if TYPE_CHECKING:
     from agno.team._run_options import ResolvedRunOptions
     from agno.team.team import Team
-
-
-def _yield_team_session_state_content_events(
-    team: "Team",
-    run_response: TeamRunOutput,
-    run_context: RunContext,
-) -> Iterator[TeamRunOutputEvent]:
-    if not team.include_session_state_in_response:
-        return
-
-    log_debug("Adding team session state to run response")
-    session_state = run_context.session_state or {}
-    content = (
-        "\n<agent_state>\n"
-        + json.dumps(session_state, default=str, indent=2)
-        + "\n</agent_state>"
-    )
-    run_response.content = (run_response.content or "") + content
-    if run_response.messages:
-        run_response.messages[-1].content = (run_response.messages[-1].content or "") + content
-    yield create_team_run_output_content_event(from_run_response=run_response, content=content)
 
 
 def _apply_manage_user_messages_if_needed(
@@ -1654,8 +1631,6 @@ def _run_stream(
                     ):
                         raise_if_cancelled(run_response.run_id)  # type: ignore
                         yield event
-
-                yield from _yield_team_session_state_content_events(team, run_response, run_context)
 
                 # Check for cancellation after model processing
                 raise_if_cancelled(run_response.run_id)  # type: ignore
@@ -3876,9 +3851,6 @@ async def _arun_stream(
                     ):
                         await araise_if_cancelled(run_response.run_id)  # type: ignore
                         yield event
-
-                for event in _yield_team_session_state_content_events(team, run_response, run_context):
-                    yield event
 
                 # Check for cancellation after model processing
                 await araise_if_cancelled(run_response.run_id)  # type: ignore

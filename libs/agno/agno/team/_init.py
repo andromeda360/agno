@@ -129,7 +129,6 @@ def __init__(
     num_history_messages: Optional[int] = None,
     max_tool_calls_from_history: Optional[int] = None,
     max_tokens_from_history: Optional[int] = None,
-    include_session_state_in_response: bool = False,
     disable_built_in_transfer_tools: bool = False,
     skills: Optional[Skills] = None,
     tools: Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], Callable[..., List]]] = None,
@@ -252,7 +251,6 @@ def __init__(
 
     team.max_tool_calls_from_history = max_tool_calls_from_history
     team.max_tokens_from_history = max_tokens_from_history
-    team.include_session_state_in_response = include_session_state_in_response
     team.disable_built_in_transfer_tools = disable_built_in_transfer_tools
 
     team.add_team_history_to_members = add_team_history_to_members

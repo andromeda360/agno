@@ -333,8 +333,6 @@ class Team:
     max_tool_calls_from_history: Optional[int] = None
     # Maximum number of tokens to include from history (None = use num_history_runs)
     max_tokens_from_history: Optional[int] = None
-    # If True, append public session state to the run response content
-    include_session_state_in_response: bool = False
     # If True, disable built-in transfer tools for member delegation
     disable_built_in_transfer_tools: bool = False
 
@@ -502,7 +500,6 @@ class Team:
         num_history_messages: Optional[int] = None,
         max_tool_calls_from_history: Optional[int] = None,
         max_tokens_from_history: Optional[int] = None,
-        include_session_state_in_response: bool = False,
         disable_built_in_transfer_tools: bool = False,
         skills: Optional[Skills] = None,
         tools: Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], Callable[..., List]]] = None,
@@ -627,7 +624,6 @@ class Team:
             num_history_messages=num_history_messages,
             max_tool_calls_from_history=max_tool_calls_from_history,
             max_tokens_from_history=max_tokens_from_history,
-            include_session_state_in_response=include_session_state_in_response,
             disable_built_in_transfer_tools=disable_built_in_transfer_tools,
             skills=skills,
             tools=tools,
