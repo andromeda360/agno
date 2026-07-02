@@ -635,7 +635,7 @@ def get_session_messages(
             model_encoding=model_encoding,
         )
 
-    return session.get_messages(
+    return session.get_messages(  # type: ignore[call-arg]
         # Only filter by agent_id if this is part of a team
         agent_id=agent.id if agent.team_id is not None else None,
         last_n_runs=last_n_runs,
@@ -696,7 +696,7 @@ async def aget_session_messages(
         )
 
     # Only filter by agent_id if this is part of a team
-    return session.get_messages(
+    return session.get_messages(  # type: ignore[call-arg]
         agent_id=agent.id if agent.team_id is not None else None,
         last_n_runs=last_n_runs,
         limit=limit,
