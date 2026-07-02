@@ -609,7 +609,7 @@ class AwsBedrock(Model):
                 "toolConfig": tool_config,
                 "inferenceConfig": self._get_inference_config(),
             }
-            body = {k: v for k, v in body.items() if v is not None}
+            body: Dict[str, Any] = {k: v for k, v in body.items() if v is not None}
 
             if self.request_params:
                 log_debug(f"Calling {self.provider} with request parameters: {self.request_params}", log_level=2)
@@ -661,7 +661,7 @@ class AwsBedrock(Model):
                 "toolConfig": tool_config,
                 "inferenceConfig": self._get_inference_config(),
             }
-            body = {k: v for k, v in body.items() if v is not None}
+            body: Dict[str, Any] = {k: v for k, v in body.items() if v is not None}
 
             if self.request_params:
                 body.update(**self.request_params)
@@ -717,7 +717,7 @@ class AwsBedrock(Model):
                 "toolConfig": tool_config,
                 "inferenceConfig": self._get_inference_config(),
             }
-            body = {k: v for k, v in body.items() if v is not None}
+            body: Dict[str, Any] = {k: v for k, v in body.items() if v is not None}
 
             if self.request_params:
                 log_debug(f"Calling {self.provider} with request parameters: {self.request_params}", log_level=2)
@@ -772,7 +772,7 @@ class AwsBedrock(Model):
                 "toolConfig": tool_config,
                 "inferenceConfig": self._get_inference_config(),
             }
-            body = {k: v for k, v in body.items() if v is not None}
+            body: Dict[str, Any] = {k: v for k, v in body.items() if v is not None}
 
             if self.request_params:
                 body.update(**self.request_params)

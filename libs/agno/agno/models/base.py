@@ -1369,7 +1369,7 @@ class Model(ABC):
         run_response: Optional[Union[RunOutput, TeamRunOutput]] = None,
         send_media_to_model: bool = True,
         compression_manager: Optional["CompressionManager"] = None,
-    ) -> Iterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent]]:
+    ) -> Iterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent, BaseBanavoStreamEvent]]:
         """
         Generate a streaming response from the model.
         """
@@ -1648,7 +1648,7 @@ class Model(ABC):
         run_response: Optional[Union[RunOutput, TeamRunOutput]] = None,
         send_media_to_model: bool = True,
         compression_manager: Optional["CompressionManager"] = None,
-    ) -> AsyncIterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent]]:
+    ) -> AsyncIterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent, BaseBanavoStreamEvent]]:
         """
         Generate an asynchronous streaming response from the model.
         """
@@ -2135,7 +2135,7 @@ class Model(ABC):
         function_call: FunctionCall,
         function_call_results: List[Message],
         additional_input: Optional[List[Message]] = None,
-    ) -> Iterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent]]:
+    ) -> Iterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent, BaseBanavoStreamEvent]]:
         # Start function call
         function_call_timer = Timer()
         function_call_timer.start()
@@ -2318,7 +2318,7 @@ class Model(ABC):
         additional_input: Optional[List[Message]] = None,
         current_function_call_count: int = 0,
         function_call_limit: Optional[int] = None,
-    ) -> Iterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent]]:
+    ) -> Iterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent, BaseBanavoStreamEvent]]:
         # Additional messages from function calls that will be added to the function call results
         if additional_input is None:
             additional_input = []
@@ -2512,7 +2512,7 @@ class Model(ABC):
         current_function_call_count: int = 0,
         function_call_limit: Optional[int] = None,
         skip_pause_check: bool = False,
-    ) -> AsyncIterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent]]:
+    ) -> AsyncIterator[Union[ModelResponse, RunOutputEvent, TeamRunOutputEvent, BaseBanavoStreamEvent]]:
         # Additional messages from function calls that will be added to the function call results
         if additional_input is None:
             additional_input = []

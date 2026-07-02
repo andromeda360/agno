@@ -918,7 +918,7 @@ class OpenAIResponses(Model):
             request_params = self.get_request_params(
                 messages=messages, response_format=response_format, tools=tools, tool_choice=tool_choice
             )
-            formatted_input = self._format_messages(messages, compress_tool_results, tools=tools)
+            formatted_input = self._format_messages(messages, compress_tool_results, tools=tools)  # type: ignore
 
             assistant_message.metrics.start_timer()
 

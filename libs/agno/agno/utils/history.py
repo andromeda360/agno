@@ -7,6 +7,7 @@ import tiktoken
 from agno.models.message import Message
 from agno.session.agent import AgentSession
 from agno.session.team import TeamSession
+from agno.session.workflow import WorkflowSession
 from agno.utils.log import log_debug
 from agno.utils.message import get_text_from_message
 
@@ -21,7 +22,7 @@ def _count_tokens_with_encoding(messages: List[Message], model_encoding: str) ->
 
 
 def get_messages_within_token_budget(
-    session: Union[AgentSession, TeamSession],
+    session: Union[AgentSession, TeamSession, WorkflowSession],
     max_tokens: int,
     agent_id: Optional[str] = None,
     team_id: Optional[str] = None,
