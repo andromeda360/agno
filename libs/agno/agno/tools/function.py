@@ -155,8 +155,6 @@ class Function(BaseModel):
     skip_entrypoint_processing: bool = False
     # If True, the function call will show the result along with sending it to the model.
     show_result: bool = False
-    # If set, only return content for these agent ids when running as a team tool
-    agent_ids_to_return_content_for: Optional[List[str]] = None
     # If True, the agent will stop after the function call.
     stop_after_tool_call: bool = False
     # Hook that runs before the function is executed.
@@ -221,14 +219,6 @@ class Function(BaseModel):
                 "approval_type",
             },
         )
-
-    def should_include_agent_content(self, agent_id: Optional[str]) -> bool:
-        """Return True if streamed member content should be included in tool output."""
-        if self.agent_ids_to_return_content_for is None:
-            return True
-        if agent_id is None:
-            return False
-        return agent_id in self.agent_ids_to_return_content_for
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Function":
