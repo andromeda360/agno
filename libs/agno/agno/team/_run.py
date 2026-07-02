@@ -133,6 +133,22 @@ if TYPE_CHECKING:
     from agno.team.team import Team
 
 
+def _apply_manage_user_messages_if_needed(
+    team: "Team",
+    run_response: TeamRunOutput,
+    manage_user_messages: bool,
+    user_message: Optional[Any],
+    run_context: Optional[RunContext] = None,
+) -> None:
+    if manage_user_messages and user_message is not None:
+        from agno.team._messages import apply_manage_user_messages
+
+        run_input = cast(TeamRunInput, run_response.input)
+        run_input.input_content = apply_manage_user_messages(
+            team, run_input.input_content, user_message=user_message, run_context=run_context
+        )
+
+
 def cancel_run(run_id: str) -> bool:
     """Cancel a running team execution.
 
@@ -1868,6 +1884,9 @@ def run_dispatch(
     if _has_async_db(team):
         raise Exception("run() is not supported with an async DB. Please use arun() instead.")
 
+    manage_user_messages = kwargs.pop("manage_user_messages", False)
+    user_message = kwargs.pop("user_message", None)
+
     # Set the id for the run
     run_id = run_id or str(uuid4())
 
@@ -1944,6 +1963,17 @@ def run_dispatch(
         )
         # Update session state from DB
         session_state = _load_session_state(team, session=team_session, session_state=session_state)
+
+        if manage_user_messages and user_message is not None:
+            from agno.team._messages import apply_manage_user_messages
+
+            validated_input = apply_manage_user_messages(
+                team,
+                validated_input,
+                user_message=user_message,
+                run_context=RunContext(run_id=run_id, session_id=session_id, session_state=session_state),
+            )
+            run_input.input_content = validated_input
 
         # Track which options were explicitly provided for run_context precedence
         dependencies_provided = dependencies is not None
@@ -3008,6 +3038,14 @@ async def _arun(
             run_id=run_response.run_id,
         )
 
+        _apply_manage_user_messages_if_needed(
+            team,
+            run_response,
+            manage_user_messages=kwargs.pop("manage_user_messages", False),
+            user_message=kwargs.pop("user_message", None),
+            run_context=run_context,
+        )
+
         # Set up retry logic
         num_attempts = team.retries + 1
         for attempt in range(num_attempts):
@@ -3631,6 +3669,14 @@ async def _arun_stream(
             run_id=run_response.run_id,
         )
 
+        _apply_manage_user_messages_if_needed(
+            team,
+            run_response,
+            manage_user_messages=kwargs.pop("manage_user_messages", False),
+            user_message=kwargs.pop("user_message", None),
+            run_context=run_context,
+        )
+
         # Set up retry logic
         num_attempts = team.retries + 1
         for attempt in range(num_attempts):
@@ -4085,6 +4131,9 @@ def arun_dispatch(  # type: ignore
 ) -> Union[TeamRunOutput, AsyncIterator[Union[RunOutputEvent, TeamRunOutputEvent]]]:
     """Run the Team asynchronously and return the response."""
 
+    manage_user_messages = kwargs.pop("manage_user_messages", False)
+    user_message = kwargs.pop("user_message", None)
+
     # Set the id for the run and register it immediately for cancellation tracking
     from agno.team._init import _initialize_session
     from agno.team._response import get_response_format
@@ -4251,6 +4300,8 @@ def arun_dispatch(  # type: ignore
             yield_run_output=opts.yield_run_output,
             debug_mode=debug_mode,
             background_tasks=background_tasks,
+            manage_user_messages=manage_user_messages,
+            user_message=user_message,
             **kwargs,
         )
     else:
@@ -4266,6 +4317,8 @@ def arun_dispatch(  # type: ignore
             response_format=response_format,
             debug_mode=debug_mode,
             background_tasks=background_tasks,
+            manage_user_messages=manage_user_messages,
+            user_message=user_message,
             **kwargs,
         )
 

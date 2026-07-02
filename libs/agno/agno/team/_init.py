@@ -128,6 +128,8 @@ def __init__(
     num_history_runs: Optional[int] = None,
     num_history_messages: Optional[int] = None,
     max_tool_calls_from_history: Optional[int] = None,
+    max_tokens_from_history: Optional[int] = None,
+    disable_built_in_transfer_tools: bool = False,
     skills: Optional[Skills] = None,
     tools: Optional[Union[List[Union[Toolkit, Callable, Function, Dict]], Callable[..., List]]] = None,
     tool_call_limit: Optional[int] = None,
@@ -248,6 +250,8 @@ def __init__(
         team.num_history_runs = 3
 
     team.max_tool_calls_from_history = max_tool_calls_from_history
+    team.max_tokens_from_history = max_tokens_from_history
+    team.disable_built_in_transfer_tools = disable_built_in_transfer_tools
 
     team.add_team_history_to_members = add_team_history_to_members
     team.num_team_history_runs = num_team_history_runs
@@ -505,6 +509,7 @@ def _initialize_member(team: "Team", member: Union["Team", Agent], debug_mode: O
         member.set_id()
         # Initialize the sub-team's model first so it has its model set
         member._set_default_model()
+
         # Then let the sub-team initialize its own members so they inherit from the sub-team
         # Only iterate if members is a static list (not a callable factory)
         if isinstance(member.members, list):

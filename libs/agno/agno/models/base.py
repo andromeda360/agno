@@ -53,6 +53,7 @@ from agno.tools.function import (
     UserFeedbackQuestion,
     UserInputField,
 )
+from agno.utils.banavo_stream_events import BaseBanavoStreamEvent
 from agno.utils.log import log_debug, log_error, log_info, log_warning
 from agno.utils.timer import Timer
 from agno.utils.tools import get_function_call_for_tool_call, get_function_call_for_tool_execution
@@ -2215,6 +2216,9 @@ class Model(ABC):
                         yield item
 
                     else:
+                        if isinstance(item, BaseBanavoStreamEvent):
+                            yield item  # type: ignore[misc]
+                            continue
                         function_call_output += str(item)
                         if function_call.function.show_result and item is not None:
                             yield ModelResponse(content=str(item))
@@ -2753,6 +2757,9 @@ class Model(ABC):
 
                     # Yield custom events emitted by the tool
                     else:
+                        if isinstance(item, BaseBanavoStreamEvent):
+                            await event_queue.put(item)
+                            continue
                         function_call_output += str(item)
                         if function_call.function.show_result and item is not None:
                             await event_queue.put(ModelResponse(content=str(item)))

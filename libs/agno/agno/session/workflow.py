@@ -413,10 +413,12 @@ class WorkflowSession:
         team_id: Optional[str] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
         skip_member_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         """Return the messages belonging to the session that fit the given criteria.
 
@@ -425,16 +427,31 @@ class WorkflowSession:
             team_id: The ID of the team to get the messages for.
             last_n_runs: Number of recent runs to include. If None, all runs will be considered.
             limit: Number of messages to include. If None, all messages will be included.
+            max_tokens: When set, include the most recent whole runs whose combined token count
+                does not exceed this budget. Overrides ``last_n_runs`` and ``limit``.
             skip_roles: Roles to skip.
             skip_statuses: Statuses to skip.
             skip_history_messages: Whether to skip history messages.
             skip_member_messages: Whether to skip messages from members of the team.
+            model_encoding: Tokenizer encoding used when ``max_tokens`` is set.
 
         Returns:
             A list of messages from the session.
         """
         if agent_id and team_id:
             raise ValueError("agent_id and team_id cannot be used together")
+
+        if max_tokens is not None:
+            from agno.utils.history import get_messages_within_token_budget
+
+            return get_messages_within_token_budget(
+                session=self,
+                max_tokens=max_tokens,
+                agent_id=agent_id,
+                team_id=team_id,
+                skip_roles=skip_roles,
+                model_encoding=model_encoding,
+            )
 
         if not self.runs:
             return []

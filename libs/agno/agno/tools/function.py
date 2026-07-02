@@ -941,7 +941,7 @@ class FunctionCall(BaseModel):
             hints = get_type_hints(self.function.entrypoint)  # type: ignore
             for param_name, hint in hints.items():
                 if param_name in entrypoint_args:
-                    continue  # Already handled by name-based injection
+                    continue
                 if isinstance(hint, type):
                     if issubclass(hint, Agent) and self.function._agent is not None:
                         entrypoint_args[param_name] = self.function._agent

@@ -118,9 +118,11 @@ class AgentSession:
         team_id: Optional[str] = None,
         last_n_runs: Optional[int] = None,
         limit: Optional[int] = None,
+        max_tokens: Optional[int] = None,
         skip_roles: Optional[List[str]] = None,
         skip_statuses: Optional[List[RunStatus]] = None,
         skip_history_messages: bool = True,
+        model_encoding: str = "cl100k_base",
     ) -> List[Message]:
         """Returns the messages belonging to the session that fit the given criteria.
 
@@ -129,13 +131,27 @@ class AgentSession:
             team_id: The id of the team to get the messages from.
             last_n_runs: The number of runs to return messages from, counting from the latest. Defaults to all runs.
             limit: The number of messages to return, counting from the latest. Defaults to all messages.
+            max_tokens: When set, include the most recent whole runs whose combined token count
+                does not exceed this budget. Overrides ``last_n_runs`` and ``limit``.
             skip_roles: Skip messages with these roles.
             skip_statuses: Skip messages with these statuses.
             skip_history_messages: Skip messages that were tagged as history in previous runs.
+            model_encoding: Tokenizer encoding used when ``max_tokens`` is set.
 
         Returns:
             A list of Messages belonging to the session.
         """
+        if max_tokens is not None:
+            from agno.utils.history import get_messages_within_token_budget
+
+            return get_messages_within_token_budget(
+                session=self,
+                max_tokens=max_tokens,
+                agent_id=agent_id,
+                team_id=team_id,
+                skip_roles=skip_roles,
+                model_encoding=model_encoding,
+            )
 
         def _should_skip_message(
             message: Message, skip_roles: Optional[List[str]] = None, skip_history_messages: bool = True
@@ -235,17 +251,30 @@ class AgentSession:
         log_debug(f"Getting messages from previous runs: {len(messages_from_history)}")
         return messages_from_history
 
-    def get_chat_history(self, last_n_runs: Optional[int] = None) -> List[Message]:
+    def get_chat_history(
+        self,
+        last_n_runs: Optional[int] = None,
+        max_tokens: Optional[int] = None,
+        model_encoding: str = "cl100k_base",
+    ) -> List[Message]:
         """Return the chat history (user and assistant messages) for the session.
         Use get_messages() for more filtering options.
 
         Args:
             last_n_runs: Number of recent runs to include. If None, all runs will be considered.
+            max_tokens: When set, include the most recent whole runs within this token budget.
+            model_encoding: Tokenizer encoding used when ``max_tokens`` is set.
 
         Returns:
             A list of user and assistant Messages belonging to the session.
         """
-        return self.get_messages(skip_roles=["system", "tool"], skip_statuses=[], last_n_runs=last_n_runs)
+        return self.get_messages(
+            skip_roles=["system", "tool"],
+            skip_statuses=[],
+            last_n_runs=last_n_runs,
+            max_tokens=max_tokens,
+            model_encoding=model_encoding,
+        )
 
     def get_tool_calls(self, num_calls: Optional[int] = None) -> List[Dict[str, Any]]:
         """Returns a list of tool calls from the messages"""

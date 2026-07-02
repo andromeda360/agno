@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 from agno.models.anthropic import Claude as AnthropicClaude
 from agno.utils.log import log_debug, log_warning
-from agno.utils.models.claude import format_tools_for_model
 
 try:
     from anthropic import AnthropicBedrock, AsyncAnthropicBedrock
@@ -38,6 +37,8 @@ class Claude(AnthropicClaude):
     aws_region: Optional[str] = None
     api_key: Optional[str] = None
     session: Optional[Session] = None
+
+    max_tokens: Optional[int] = None
 
     client: Optional[AnthropicBedrock] = None  # type: ignore
     async_client: Optional[AsyncAnthropicBedrock] = None  # type: ignore
@@ -192,8 +193,12 @@ class Claude(AnthropicClaude):
             self._validate_thinking_support()
 
         _request_params: Dict[str, Any] = {}
-        if self.max_tokens:
-            _request_params["max_tokens"] = self.max_tokens
+        max_tokens = self.max_tokens
+        if max_tokens is None and self.thinking:
+            budget = (self.thinking or {}).get("budget_tokens", 0)
+            max_tokens = max(64000, budget + 1)
+        if max_tokens:
+            _request_params["max_tokens"] = max_tokens
         if self.thinking:
             _request_params["thinking"] = self.thinking
         if self.output_config:
@@ -222,38 +227,3 @@ class Claude(AnthropicClaude):
         if _request_params:
             log_debug(f"Calling {self.provider} with request parameters: {_request_params}", log_level=2)
         return _request_params
-
-    def _prepare_request_kwargs(
-        self,
-        system_message: str,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        response_format: Optional[Union[Dict, Type[BaseModel]]] = None,
-        messages: Optional[List[Any]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Prepare the request keyword arguments for the API call.
-
-        Args:
-            system_message (str): The concatenated system messages.
-            tools: Optional list of tools
-            response_format: Optional response format (Pydantic model or dict)
-            messages: Optional list of Message objects for the conversation.
-
-        Returns:
-            Dict[str, Any]: The request keyword arguments.
-        """
-        # Pass response_format and tools to get_request_params for beta header handling
-        request_kwargs = self.get_request_params(response_format=response_format, tools=tools).copy()
-        system = self._build_system(system_message)
-        if system:
-            request_kwargs["system"] = system
-
-        # Format tools (this will handle strict mode)
-        if tools:
-            request_kwargs["tools"] = format_tools_for_model(tools)
-
-        self._apply_cache_tools(request_kwargs)
-
-        if request_kwargs:
-            log_debug(f"Calling {self.provider} with request parameters: {request_kwargs}", log_level=2)
-        return request_kwargs

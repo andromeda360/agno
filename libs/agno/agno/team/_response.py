@@ -38,6 +38,7 @@ from agno.run.team import (
 )
 from agno.session import TeamSession
 from agno.tools.function import Function
+from agno.utils.banavo_stream_events import BaseBanavoStreamEvent
 from agno.utils.events import (
     create_team_compression_completed_event,
     create_team_compression_started_event,
@@ -1311,6 +1312,10 @@ def _handle_model_response_chunk(
     session_state: Optional[Dict[str, Any]] = None,
     run_context: Optional[RunContext] = None,
 ) -> Iterator[Union[TeamRunOutputEvent, RunOutputEvent]]:
+    if isinstance(model_response_event, BaseBanavoStreamEvent):
+        yield model_response_event  # type: ignore
+        return
+
     if isinstance(model_response_event, tuple(get_args(RunOutputEvent))) or isinstance(
         model_response_event, tuple(get_args(TeamRunOutputEvent))
     ):

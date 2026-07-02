@@ -41,6 +41,21 @@ from agno.utils.prompts import get_json_output_prompt, get_response_model_format
 from agno.utils.timer import Timer
 
 
+def _get_history_messages(
+    agent: "Agent",
+    session: AgentSession,
+    skip_role: Optional[str],
+) -> List[Message]:
+    agent_id = agent.id if agent.team_id is not None else None
+    return session.get_messages(
+        last_n_runs=agent.num_history_runs,
+        limit=agent.num_history_messages,
+        max_tokens=agent.max_tokens_from_history,
+        skip_roles=[skip_role] if skip_role else None,
+        agent_id=agent_id,
+    )
+
+
 def _get_resolved_knowledge(agent: "Agent", run_context: Optional[RunContext] = None) -> Any:
     """Get the resolved knowledge, preferring run_context over agent.knowledge."""
     from agno.utils.callables import get_resolved_knowledge
@@ -1248,12 +1263,7 @@ def get_run_messages(
             agent.system_message_role if agent.system_message_role not in ["user", "assistant", "tool"] else None
         )
 
-        history: List[Message] = session.get_messages(
-            last_n_runs=agent.num_history_runs,
-            limit=agent.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            agent_id=agent.id if agent.team_id is not None else None,
-        )
+        history: List[Message] = _get_history_messages(agent, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages
@@ -1453,12 +1463,7 @@ async def aget_run_messages(
             agent.system_message_role if agent.system_message_role not in ["user", "assistant", "tool"] else None
         )
 
-        history: List[Message] = session.get_messages(
-            last_n_runs=agent.num_history_runs,
-            limit=agent.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            agent_id=agent.id if agent.team_id is not None else None,
-        )
+        history: List[Message] = _get_history_messages(agent, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages
@@ -1625,12 +1630,7 @@ def get_continue_run_messages(
             agent.system_message_role if agent.system_message_role not in ["user", "assistant", "tool"] else None
         )
 
-        history: List[Message] = session.get_messages(
-            last_n_runs=agent.num_history_runs,
-            limit=agent.num_history_messages,
-            skip_roles=[skip_role] if skip_role else None,
-            agent_id=agent.id if agent.team_id is not None else None,
-        )
+        history: List[Message] = _get_history_messages(agent, session, skip_role)
 
         if len(history) > 0:
             # Create a deep copy of the history messages to avoid modifying the original messages
