@@ -38,6 +38,7 @@ from agno.utils.common import is_typed_dict
 from agno.utils.log import log_debug, log_warning
 from agno.utils.message import filter_tool_calls, get_text_from_message
 from agno.utils.prompts import get_json_output_prompt, get_response_model_format_prompt
+from agno.utils.timer import Timer
 
 
 def _get_history_messages(
@@ -53,7 +54,6 @@ def _get_history_messages(
         skip_roles=[skip_role] if skip_role else None,
         agent_id=agent_id,
     )
-from agno.utils.timer import Timer
 
 
 def _get_resolved_knowledge(agent: "Agent", run_context: Optional[RunContext] = None) -> Any:
